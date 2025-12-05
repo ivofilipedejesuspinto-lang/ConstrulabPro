@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { X, Mail, Globe, MapPin, ChevronRight, HelpCircle, Book, Shield, FileText, Building2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Mail, Globe, MapPin, ChevronRight, HelpCircle, Book, Shield, FileText, Building2, Send, Loader2, CheckCircle } from 'lucide-react';
 
 interface PageProps {
   onClose: () => void;
@@ -137,35 +137,106 @@ export const FaqPage: React.FC<PageProps> = ({ onClose }) => (
   </PageLayout>
 );
 
+const ContactForm = () => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [msg, setMsg] = useState('');
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('sending');
+
+        try {
+            const response = await fetch('/.netlify/functions/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: 'info@calcconstru.pro', // Email de destino (o teu)
+                    replyTo: email,
+                    subject: `Novo Contacto de: ${name}`,
+                    html: `<p><strong>Nome:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensagem:</strong><br/>${msg}</p>`
+                })
+            });
+
+            if (response.ok) {
+                setStatus('success');
+                setName('');
+                setEmail('');
+                setMsg('');
+            } else {
+                throw new Error("Erro no envio");
+            }
+        } catch (e) {
+            console.error(e);
+            setStatus('error');
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <div className="bg-emerald-900/20 border border-emerald-500/30 p-8 rounded-2xl text-center">
+                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={32}/>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Mensagem Enviada!</h3>
+                <p className="text-slate-400">Obrigado pelo contacto. Responderemos o mais breve possível.</p>
+                <button onClick={() => setStatus('idle')} className="mt-6 text-blue-400 font-bold hover:underline">Enviar outra mensagem</button>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
+            <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Seu Nome</label>
+                <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none"/>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Seu Email</label>
+                <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none"/>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mensagem</label>
+                <textarea required rows={4} value={msg} onChange={e => setMsg(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none resize-none"></textarea>
+            </div>
+            <button disabled={status === 'sending'} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-colors">
+                {status === 'sending' ? <Loader2 className="animate-spin" size={20}/> : <Send size={20}/>}
+                Enviar Mensagem
+            </button>
+            {status === 'error' && <p className="text-red-400 text-sm text-center font-bold">Erro ao enviar. Tente novamente.</p>}
+        </form>
+    );
+};
+
 export const ContactPage: React.FC<PageProps> = ({ onClose }) => (
   <PageLayout title="Contacte-nos" icon={<Mail size={24}/>} onClose={onClose}>
     <p className="text-slate-300 mb-8">
-      Tem dúvidas, sugestões ou encontrou um erro? A nossa equipa de suporte está disponível para ajudar.
+      Tem dúvidas, sugestões ou encontrou um erro? Utilize o formulário abaixo ou os contactos diretos.
     </p>
 
-    <div className="grid gap-6">
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-blue-500/30 transition-colors">
-            <Mail className="text-blue-500 mb-4" size={32} />
-            <h3 className="text-white font-bold text-lg mb-1">Email Geral</h3>
-            <p className="text-slate-400 text-sm mb-4">Para questões gerais e parcerias.</p>
-            <a href="mailto:info@calcconstru.pro" className="text-blue-400 font-bold hover:underline">info@calcconstru.pro</a>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Formulário */}
+        <div>
+            <ContactForm />
         </div>
 
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-emerald-500/30 transition-colors">
-            <Globe className="text-emerald-500 mb-4" size={32} />
-            <h3 className="text-white font-bold text-lg mb-1">Suporte Técnico</h3>
-            <p className="text-slate-400 text-sm mb-4">Problemas com a aplicação ou conta.</p>
-            <a href="mailto:suporte@calcconstru.pro" className="text-emerald-400 font-bold hover:underline">suporte@calcconstru.pro</a>
-        </div>
+        {/* Info Lateral */}
+        <div className="space-y-6">
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                <Mail className="text-blue-500 mb-4" size={24} />
+                <h3 className="text-white font-bold text-lg mb-1">Email Geral</h3>
+                <a href="mailto:info@calcconstru.pro" className="text-blue-400 font-bold hover:underline">info@calcconstru.pro</a>
+            </div>
 
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-            <MapPin className="text-amber-500 mb-4" size={32} />
-            <h3 className="text-white font-bold text-lg mb-1">Sede</h3>
-            <address className="text-slate-400 text-sm not-italic">
-                Av. da Construção, 123<br/>
-                Lisboa, Portugal<br/>
-                1000-001
-            </address>
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                <MapPin className="text-amber-500 mb-4" size={24} />
+                <h3 className="text-white font-bold text-lg mb-1">Sede</h3>
+                <address className="text-slate-400 text-sm not-italic">
+                    Av. da Construção, 123<br/>
+                    Lisboa, Portugal
+                </address>
+            </div>
         </div>
     </div>
   </PageLayout>

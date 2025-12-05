@@ -13,10 +13,13 @@ import { AboutPage, ContactPage, FaqPage, PrivacyPage, TermsPage } from './compo
 import { ProAccessModal } from './components/ProAccessModal';
 import { AuthService } from './services/authService';
 import { ProjectService } from './services/projectService';
-import { Logo } from './components/Logo'; // Import Logo
+import { Logo } from './components/Logo';
+import { LanguageSelector } from './components/LanguageSelector';
+import { useLanguage } from './contexts/LanguageContext';
 import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu, Sparkles, Code } from 'lucide-react';
 
 const App: React.FC = () => {
+  const { t } = useLanguage();
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(UnitSystem.SI);
   const [calculatedAreaM2, setCalculatedAreaM2] = useState<number>(0);
   
@@ -179,7 +182,6 @@ const App: React.FC = () => {
       if (pageId === 'home') {
           setActivePage(null);
       } else if (pageId === 'client-area') {
-          // Lógica especial para Área de Cliente
           if (currentUser) {
              setIsProfileModalOpen(true);
           } else {
@@ -225,7 +227,7 @@ const App: React.FC = () => {
             <button 
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                title="Menu Principal"
+                title={t('menu')}
             >
                 <Menu size={24} />
             </button>
@@ -236,19 +238,23 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            
+            {/* LANGUAGE SELECTOR - ADDED HERE */}
+            <LanguageSelector />
+
             <div className="hidden md:flex items-center bg-slate-950 rounded-lg p-1 border border-slate-800">
               <button 
                 onClick={() => setUnitSystem(UnitSystem.SI)}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.SI ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
               >
-                Métrico
+                {t('metric')}
               </button>
               <button 
                 onClick={() => setUnitSystem(UnitSystem.IMPERIAL)}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.IMPERIAL ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
               >
-                Imperial
+                {t('imperial')}
               </button>
             </div>
 
@@ -257,10 +263,10 @@ const App: React.FC = () => {
                  {currentUser.role === 'admin' && (
                     <button 
                       onClick={() => setIsAdminPanelOpen(true)} 
-                      className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded-full text-xs font-bold border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]" 
+                      className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded-full text-xs font-bold border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]" 
                       title="Painel Admin"
                     >
-                      <Shield size={14} /> ADMIN
+                      <Shield size={14} /> {t('admin')}
                     </button>
                  )}
                  {isPro ? (
@@ -273,7 +279,7 @@ const App: React.FC = () => {
                       onClick={() => setIsProAccessModalOpen(true)}
                       className="hidden sm:flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg transition-all"
                     >
-                      <Crown size={14} /> UPGRADE
+                      <Crown size={14} /> {t('upgrade')}
                     </button>
                  )}
                  <div className="flex items-center gap-3 pl-3 border-l border-slate-700">
@@ -297,7 +303,7 @@ const App: React.FC = () => {
                       <RefreshCw size={18} />
                     </button>
 
-                    <button onClick={handleLogout} className="text-slate-500 hover:text-white transition-colors p-1.5" title="Sair">
+                    <button onClick={handleLogout} className="text-slate-500 hover:text-white transition-colors p-1.5" title={t('logout')}>
                       <LogOut size={18} />
                     </button>
                  </div>
@@ -305,9 +311,9 @@ const App: React.FC = () => {
             ) : (
               <button 
                 onClick={() => setIsProAccessModalOpen(true)}
-                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 transition-all"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-blue-600 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-900/20 text-white px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 transition-all"
               >
-                <LogIn size={16} /> Entrar
+                <LogIn size={16} /> {t('login')}
               </button>
             )}
           </div>
@@ -318,12 +324,6 @@ const App: React.FC = () => {
         
         <div className="flex flex-col gap-8 print:hidden">
             <AdUnit id="ad-top" slotType="header" isPro={isPro} />
-
-            <div className="prose prose-invert prose-base max-w-none text-slate-400">
-              <p>
-                Utilize as ferramentas abaixo para desenhar a geometria do seu terreno ou laje e estimar os materiais necessários.
-              </p>
-            </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
@@ -379,7 +379,7 @@ const App: React.FC = () => {
         <div className="p-6 border border-yellow-900/50 bg-yellow-900/10 rounded-xl flex gap-4 print:hidden">
              <Info className="text-yellow-600 flex-shrink-0" size={28} />
              <div className="text-base text-yellow-500/80 leading-relaxed">
-               <strong>Aviso Legal:</strong> Esta ferramenta fornece estimativas orientativas baseadas em rácios médios. Verifique sempre as normas locais e consulte um engenheiro antes de iniciar a obra.
+               <strong>{t('disclaimerTitle')}</strong> {t('disclaimerText')}
              </div>
         </div>
 
@@ -388,18 +388,18 @@ const App: React.FC = () => {
       <footer className="border-t border-slate-800 mt-16 py-10 bg-slate-950 print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-slate-500 text-base flex items-center justify-center gap-2 mb-4">
-            © {new Date().getFullYear()} <span className="font-bold text-slate-300">CalcConstruPRO</span>
+            © {new Date().getFullYear()} <span className="font-bold text-slate-300">CalcConstruPRO</span> • {t('rights')}
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs text-slate-600 font-medium">
              <div className="flex items-center gap-1.5">
                 <Sparkles size={12} className="text-indigo-500" />
-                <span>Criado por <span className="text-indigo-400 font-bold">AI</span> no <span className="text-slate-400 font-bold">Google AI Studio</span></span>
+                <span>{t('createdAi')} <span className="text-indigo-400 font-bold">AI</span></span>
              </div>
              <span className="hidden md:inline text-slate-800">•</span>
              <div className="flex items-center gap-1.5">
                 <Code size={12} className="text-blue-500" />
-                <span>Desenvolvido por <span className="text-slate-300 font-bold">Ivo Pinto</span></span>
+                <span>{t('devBy')} <span className="text-slate-300 font-bold">Ivo Pinto</span></span>
              </div>
           </div>
         </div>

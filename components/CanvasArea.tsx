@@ -4,6 +4,7 @@ import { Point, UnitSystem, ProjectData } from '../types';
 import { calculatePolygonAreaPx, getDistance, convertValue, formatNumber } from '../utils/math';
 import { LABELS } from '../constants';
 import { Trash2, ZoomIn, Scan, FolderOpen, Lock, Pencil, Cloud } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CanvasAreaProps {
   unitSystem: UnitSystem;
@@ -26,6 +27,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     externalLoadData,
     projectName
 }) => {
+  const { t } = useLanguage();
   const [points, setPoints] = useState<Point[]>([]);
   const [isClosed, setIsClosed] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -235,7 +237,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                             type="text" 
                             value={localName}
                             onChange={handleNameChange}
-                            placeholder="Nome do Projeto..."
+                            placeholder={t('projectNamePlaceholder')}
                             className={`bg-transparent border-b text-slate-100 font-semibold text-base placeholder-slate-600 outline-none w-full md:w-64 transition-all pb-0.5 ${
                                 nameError 
                                 ? 'border-red-500 placeholder-red-500/50 animate-pulse' 
@@ -246,17 +248,17 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                         
                         {nameError && (
                             <span className="absolute left-0 -bottom-5 text-[10px] text-red-500 font-bold animate-in slide-in-from-top-1">
-                                Obrigatório
+                                {t('required')}
                             </span>
                         )}
                     </div>
                     
                     <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
-                        <span>{points.length > 0 ? (isClosed ? "Geometria fechada" : "A desenhar...") : "Definir geometria"}</span>
+                        <span>{points.length > 0 ? (isClosed ? t('geometryClosed') : t('drawing')) : t('defineGeometry')}</span>
                         {points.length > 0 && (
                             <>
                             <span className="w-1.5 h-1.5 bg-slate-700 rounded-full"></span>
-                            <span className="text-blue-400 font-bold">{points.length} pontos</span>
+                            <span className="text-blue-400 font-bold">{points.length} {t('points')}</span>
                             </>
                         )}
                     </div>
@@ -264,56 +266,51 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
             </div>
             
             {/* Toolbar */}
-            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                {/* Scale Control */}
-                <div className="flex items-center bg-slate-950/80 rounded-xl border border-slate-800 p-1 pl-3 shadow-inner">
-                    <span className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mr-2 uppercase tracking-wider">
-                    <ZoomIn size={12} /> Escala
+            <div className="flex items-center gap-1 w-full md:w-auto justify-end">
+                {/* Scale Control - YELLOW/AMBER */}
+                <div className="group flex items-center rounded-xl border border-transparent hover:bg-amber-950/30 hover:border-amber-900/50 px-2 py-1.5 transition-all cursor-default">
+                    <span className="flex items-center gap-1.5 text-xs text-slate-500 group-hover:text-amber-400 font-bold mr-2 uppercase tracking-wider transition-colors">
+                    <ZoomIn size={14} /> <span className="hidden sm:inline">{t('scale')}</span>
                     </span>
-                    <div className="flex items-center bg-slate-800/50 rounded-lg px-2 py-1 gap-1 border border-slate-700/30">
+                    <div className="flex items-center bg-slate-950/50 group-hover:bg-slate-950 rounded-lg px-2 py-1 gap-1 border border-slate-800 group-hover:border-amber-500/30 transition-colors">
                     <input 
                         type="number" 
                         value={scale} 
                         onChange={(e) => setScale(Number(e.target.value))}
-                        className="w-8 bg-transparent text-sm font-mono text-slate-200 focus:outline-none text-right placeholder-slate-600 font-bold"
+                        className="w-8 bg-transparent text-sm font-mono text-slate-300 group-hover:text-amber-200 focus:outline-none text-right placeholder-slate-600 font-bold"
                         min="1"
                         />
-                        <span className="text-[10px] text-slate-500 font-mono">px/m</span>
+                        <span className="text-[10px] text-slate-600 group-hover:text-amber-500/50 font-mono">px/m</span>
                     </div>
                 </div>
                 
                 <div className="h-6 w-px bg-slate-800 mx-1 hidden md:block"></div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2">
+                <div className="flex gap-1">
+                    {/* Abrir - BLUE */}
                     <button 
                         onClick={handleLoadClick}
-                        className={`group px-3 py-2 border rounded-xl transition-all relative flex items-center gap-2 font-bold text-sm ${
-                            isPro 
-                            ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-950/30 border-transparent hover:border-blue-900/50' 
-                            : 'text-slate-600 bg-slate-950/50 border-slate-800'
-                        }`}
-                        title="Abrir Projeto"
+                        className="group px-3 py-2 border border-transparent rounded-xl transition-all relative flex items-center gap-2 font-bold text-sm text-slate-500 hover:text-blue-400 hover:bg-blue-950/30 hover:border-blue-900/50"
+                        title={t('open')}
                     >
                         <FolderOpen size={18} strokeWidth={2} />
-                        <span className="hidden sm:inline">Abrir</span>
+                        <span className="hidden sm:inline">{t('open')}</span>
                         {!isPro && <div className="absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5"><Lock size={8} className="text-white"/></div>}
                     </button>
 
+                    {/* Guardar - GREEN/EMERALD */}
                     <button 
                         onClick={handleSaveClick}
-                        className={`group px-3 py-2 border rounded-xl transition-all relative flex items-center gap-2 font-bold text-sm ${
-                            isPro 
-                            ? 'bg-emerald-600/10 text-emerald-500 hover:bg-emerald-600 hover:text-white border-emerald-900/50' 
-                            : 'text-slate-600 bg-slate-950/50 border-slate-800'
-                        }`}
-                        title="Guardar Projeto"
+                        className="group px-3 py-2 border border-transparent rounded-xl transition-all relative flex items-center gap-2 font-bold text-sm text-slate-500 hover:text-emerald-400 hover:bg-emerald-950/30 hover:border-emerald-900/50"
+                        title={t('save')}
                     >
                         <Cloud size={18} strokeWidth={2} />
-                        <span className="hidden sm:inline">Guardar</span>
+                        <span className="hidden sm:inline">{t('save')}</span>
                         {!isPro && <div className="absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5"><Lock size={8} className="text-white"/></div>}
                     </button>
 
+                    {/* Trash - RED */}
                     <button 
                         onClick={resetCanvas}
                         className="group p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/30 border border-transparent hover:border-red-900/50 rounded-xl transition-all"

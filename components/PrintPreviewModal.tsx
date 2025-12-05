@@ -6,6 +6,7 @@ import { Printer, FileText, X, Building2 } from 'lucide-react';
 import { formatNumber, convertValue } from '../utils/math';
 import { LABELS, CONVERSIONS } from '../constants';
 import { Logo } from './Logo';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface PrintData {
   unitSystem: UnitSystem;
@@ -32,6 +33,7 @@ interface PrintPreviewModalProps {
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onClose, user }) => {
+  const { t } = useLanguage();
   const { 
     unitSystem, displayVolume, config, 
     matCementKg, matSand, matGravel, matWater, 
@@ -78,7 +80,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Relatório de Materiais</title>
+        <title>${t('reportTitle')}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -173,7 +175,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
             
             {!isPro && (
                 <div className="watermark absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 text-[80px] font-bold text-slate-200/40 border-4 border-slate-200/40 p-10 rounded-3xl whitespace-nowrap z-0 pointer-events-none select-none">
-                    VERSÃO GRATUITA
+                    {t('freeVersion')}
                 </div>
             )}
 
@@ -195,13 +197,12 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
                         {hasCustomName ? (
                             <div>
                                 <h1 className="text-2xl font-black text-slate-900 leading-none tracking-tight">{user!.companyName}</h1>
-                                <div className="text-xs text-slate-500 font-bold uppercase mt-1">Relatório Técnico</div>
+                                <div className="text-xs text-slate-500 font-bold uppercase mt-1">{t('techReport')}</div>
                             </div>
                         ) : (
-                            // Logo only provided, no name override -> Show default name small or nothing? 
-                            // Fallback to default styling if no name provided but logo exists
+                            // Logo only provided, no name override
                             <div>
-                                <h1 className="text-2xl font-black text-slate-900 leading-none tracking-tight">Relatório de Materiais</h1>
+                                <h1 className="text-2xl font-black text-slate-900 leading-none tracking-tight">{t('reportTitle')}</h1>
                                 <div className="text-xs text-slate-500 font-bold uppercase mt-1">CalcConstruPRO (Powered by)</div>
                             </div>
                         )}
@@ -214,7 +215,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
                 )}
 
                 <div className="text-right">
-                    <div className="text-lg font-bold text-slate-600">Estimativa de Materiais</div>
+                    <div className="text-lg font-bold text-slate-600">{t('estimateQty')}</div>
                     <div className="text-[10px] text-slate-400 font-mono font-medium">
                         {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString()}
                     </div>
@@ -224,69 +225,69 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
             {/* CONTENT SECTIONS */}
             <div className="mb-4 relative z-10">
                 <h2 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-1 mb-2 flex items-center gap-2">
-                    1. Resumo do Projeto
+                    {t('projectSummary')}
                 </h2>
                 <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-blue-100 shadow-sm print:shadow-none print:border-slate-300">
                     <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Tipo de Estrutura</div>
-                        <div className="text-lg font-bold text-slate-900">{mode === 'slab' ? 'Laje (Betão Armado)' : 'Viga / Pilar / Caixa'}</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">{t('structureType')}</div>
+                        <div className="text-lg font-bold text-slate-900">{mode === 'slab' ? t('slabMesh') : t('beamPillar')}</div>
                     </div>
                     <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Volume Total Estimado</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">{t('totalVolume')}</div>
                         <div className="text-lg font-bold text-slate-900 flex items-baseline gap-1">
                             {formatNumber(displayVolume, 3)} <span className="text-xs text-slate-500 font-medium">{units.volume}</span>
                         </div>
                     </div>
                     <div className="col-span-2 mt-1 pt-2 border-t border-slate-100">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Traço Configurado (Referência 1m³)</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">{t('traceRef')}</div>
                         <div className="font-mono text-xs font-medium text-blue-900 bg-blue-50 px-3 py-2 rounded border border-blue-100 inline-block print:border print:bg-transparent print:p-1 print:border-slate-300">
-                            {config.cementKgPerM3}kg Cimento <span className="text-blue-300 mx-2">|</span> {config.sandM3PerM3}m³ Areia <span className="text-blue-300 mx-2">|</span> {config.gravelM3PerM3}m³ Brita
+                            {config.cementKgPerM3}kg {t('cement')} <span className="text-blue-300 mx-2">|</span> {config.sandM3PerM3}m³ {t('sand')} <span className="text-blue-300 mx-2">|</span> {config.gravelM3PerM3}m³ {t('gravel')}
                         </div>
                     </div>
                 </div>
             </div>
 
             <div className="mb-4 relative z-10">
-                <h2 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-1 mb-2">2. Quantidades de Materiais</h2>
+                <h2 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-1 mb-2">{t('materialQty')}</h2>
                 <table className="w-full text-left text-sm border-collapse">
                     <thead>
                         <tr className="bg-blue-50 border-b border-blue-200 text-blue-900">
-                            <th className="p-2 font-bold rounded-tl-lg text-xs">Material</th>
-                            <th className="p-2 font-bold text-right text-xs">Quantidade Estimada</th>
-                            <th className="p-2 font-bold text-right rounded-tr-lg text-xs">Observações</th>
+                            <th className="p-2 font-bold rounded-tl-lg text-xs">{t('material')}</th>
+                            <th className="p-2 font-bold text-right text-xs">{t('estimated')}</th>
+                            <th className="p-2 font-bold text-right rounded-tr-lg text-xs">{t('obs')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-blue-100">
                         <tr>
-                            <td className="p-2 font-bold text-slate-700 text-sm">Cimento Portland</td>
+                            <td className="p-2 font-bold text-slate-700 text-sm">{t('cement')} Portland</td>
                             <td className="p-2 text-right font-bold text-base text-slate-900 bg-blue-50/30">
                                 {formatNumber(convertValue(matCementKg, 'weight', unitSystem), 1)} <span className="text-[10px] font-normal text-slate-500">{units.weight}</span>
                             </td>
-                            <td className="p-2 text-right text-slate-600 font-mono font-medium text-xs">~{bags} sacos</td>
+                            <td className="p-2 text-right text-slate-600 font-mono font-medium text-xs">~{bags} {t('bags')}</td>
                         </tr>
                         <tr>
-                            <td className="p-2 font-bold text-slate-700 text-sm">Areia (Média/Lavada)</td>
+                            <td className="p-2 font-bold text-slate-700 text-sm">{t('sand')} ({t('washed')})</td>
                             <td className="p-2 text-right font-bold text-base text-slate-900">
                                 {formatNumber(convertValue(matSand, 'volume', unitSystem), 2)} <span className="text-[10px] font-normal text-slate-500">{units.volume}</span>
                             </td>
                             <td className="p-2 text-right text-slate-600 font-medium text-xs">-</td>
                         </tr>
                         <tr>
-                            <td className="p-2 font-bold text-slate-700 text-sm">Brita / Inertes</td>
+                            <td className="p-2 font-bold text-slate-700 text-sm">{t('gravel')} / Inertes</td>
                             <td className="p-2 text-right font-bold text-base text-slate-900">
                                 {formatNumber(convertValue(matGravel, 'volume', unitSystem), 2)} <span className="text-[10px] font-normal text-slate-500">{units.volume}</span>
                             </td>
                             <td className="p-2 text-right text-slate-600 font-medium text-xs">Calibre 12/24</td>
                         </tr>
                         <tr>
-                            <td className="p-2 font-bold text-slate-700 text-sm">Água</td>
+                            <td className="p-2 font-bold text-slate-700 text-sm">{t('water')}</td>
                             <td className="p-2 text-right font-bold text-base text-slate-900">
                                 {formatNumber(unitSystem === UnitSystem.SI ? matWater : matWater * CONVERSIONS.L_TO_GAL, 1)} <span className="text-[10px] font-normal text-slate-500">{units.liquid}</span>
                             </td>
                             <td className="p-2 text-right text-slate-600 font-medium text-xs">Fator a/c ~0.5</td>
                         </tr>
                         <tr className="bg-blue-50/50 print:bg-transparent border-t-2 border-blue-200">
-                            <td className="p-2 font-black text-blue-900 text-sm">Aço Total (Armadura)</td>
+                            <td className="p-2 font-black text-blue-900 text-sm">{t('steel')}</td>
                             <td className="p-2 text-right font-black text-base text-blue-900">
                                 {formatNumber(convertValue(matSteelMin, 'weight', unitSystem), 0)} - {formatNumber(convertValue(matSteelMax, 'weight', unitSystem), 0)} <span className="text-[10px] font-bold text-blue-400">{units.weight}</span>
                             </td>
@@ -297,7 +298,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
             </div>
 
             <div className="mb-4 relative z-10">
-                <h2 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-1 mb-2">3. Detalhe de Armadura ({steelBreakdown.type})</h2>
+                <h2 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-1 mb-2">{t('steelDetailTitle')} ({steelBreakdown.type})</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {steelBreakdown.parts.map((part, idx) => (
                         <div key={idx} className="bg-white border border-slate-100 rounded-xl p-3 flex justify-between items-center break-inside-avoid shadow-sm print:border-slate-300 print:shadow-none">
@@ -316,11 +317,10 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
             {/* FOOTER */}
             <div className="mt-auto border-t border-slate-200 pt-4 text-center print:mt-auto relative z-10">
                 <p className="text-[10px] text-slate-500 leading-relaxed max-w-lg mx-auto">
-                    <strong>Aviso Legal:</strong> Este documento é uma estimativa gerada automaticamente com base em rácios volumétricos médios. 
-                    Não substitui um projeto de estabilidade nem o cálculo estrutural rigoroso efetuado por um engenheiro civil.
+                    <strong>{t('disclaimerTitle')}</strong> {t('disclaimerText')}
                 </p>
                 <div className="mt-1 text-[9px] uppercase font-bold text-slate-300">
-                    {hasCustomName ? 'Gerado com CalcConstruPRO' : 'Gerado por CalcConstruPRO v1.2'}
+                    {hasCustomName ? `${t('generatedBy')} CalcConstruPRO` : `${t('generatedBy')} CalcConstruPRO v1.2`}
                 </div>
             </div>
 
