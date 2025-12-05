@@ -13,7 +13,8 @@ import { AboutPage, ContactPage, FaqPage, PrivacyPage, TermsPage } from './compo
 import { ProAccessModal } from './components/ProAccessModal';
 import { AuthService } from './services/authService';
 import { ProjectService } from './services/projectService';
-import { Construction, Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu } from 'lucide-react';
+import { Logo } from './components/Logo'; // Import Logo
+import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu } from 'lucide-react';
 
 const App: React.FC = () => {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(UnitSystem.SI);
@@ -221,14 +222,9 @@ const App: React.FC = () => {
                 <Menu size={24} />
             </button>
 
-            <div className="flex items-center gap-4 border-l border-slate-700 pl-4">
-              <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-900/20 hidden sm:block">
-                 <Construction className="text-white" size={24} />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-white leading-tight tracking-tight">CalcConstruPRO</h1>
-                <div className="text-xs text-blue-400 font-mono tracking-widest uppercase font-semibold">Calculadora Civil</div>
-              </div>
+            {/* BRANDING LOGO */}
+            <div className="pl-4 border-l border-slate-700">
+              <Logo className="h-9" />
             </div>
           </div>
 
@@ -383,8 +379,8 @@ const App: React.FC = () => {
 
       <footer className="border-t border-slate-800 mt-16 py-10 bg-slate-950 print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-slate-500 text-base">
-            © {new Date().getFullYear()} CalcConstruPRO. Desenvolvido por Ivo Pinto • Criado com Google AI Studio
+          <p className="text-slate-500 text-base flex items-center justify-center gap-2">
+            © {new Date().getFullYear()} <span className="font-bold text-slate-300">CalcConstruPRO</span>
           </p>
         </div>
       </footer>

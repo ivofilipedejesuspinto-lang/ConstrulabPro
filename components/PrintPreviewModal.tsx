@@ -2,9 +2,10 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { UnitSystem, MaterialConfig, User } from '../types';
-import { Construction, Printer, FileText, X, Building2 } from 'lucide-react';
+import { Printer, FileText, X, Building2 } from 'lucide-react';
 import { formatNumber, convertValue } from '../utils/math';
 import { LABELS, CONVERSIONS } from '../constants';
+import { Logo } from './Logo';
 
 interface PrintData {
   unitSystem: UnitSystem;
@@ -207,14 +208,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ data, onCl
                      </div>
                 ) : (
                     // DEFAULT HEADER
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-600 p-2 rounded-lg print:border print:border-blue-600">
-                            <Construction className="text-white" size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900 leading-none tracking-tight">CalcConstruPRO</h1>
-                            <div className="text-xs text-blue-600 font-bold tracking-widest uppercase mt-0.5">Calculadora Civil</div>
-                        </div>
+                    <div className="flex items-center gap-4">
+                        <Logo className="h-10 text-slate-900" variant="color" />
                     </div>
                 )}
 

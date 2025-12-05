@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
-import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, Construction } from 'lucide-react';
+import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin } from 'lucide-react';
+import { Logo } from './Logo';
 
 interface NavigationMenuProps {
   isOpen: boolean;
@@ -52,12 +53,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-            <div className="flex items-center gap-3">
-                <div className="bg-blue-600 p-1.5 rounded-lg">
-                    <Construction className="text-white" size={20} />
-                </div>
-                <span className="font-bold text-white text-lg">Menu</span>
-            </div>
+            <Logo className="h-7" showText={false} />
             <button 
                 onClick={onClose}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
