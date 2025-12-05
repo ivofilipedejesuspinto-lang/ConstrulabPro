@@ -14,7 +14,7 @@ import { ProAccessModal } from './components/ProAccessModal';
 import { AuthService } from './services/authService';
 import { ProjectService } from './services/projectService';
 import { Logo } from './components/Logo'; // Import Logo
-import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu } from 'lucide-react';
+import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu, Sparkles, Code } from 'lucide-react';
 
 const App: React.FC = () => {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(UnitSystem.SI);
@@ -387,9 +387,21 @@ const App: React.FC = () => {
 
       <footer className="border-t border-slate-800 mt-16 py-10 bg-slate-950 print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-slate-500 text-base flex items-center justify-center gap-2">
+          <p className="text-slate-500 text-base flex items-center justify-center gap-2 mb-4">
             © {new Date().getFullYear()} <span className="font-bold text-slate-300">CalcConstruPRO</span>
           </p>
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs text-slate-600 font-medium">
+             <div className="flex items-center gap-1.5">
+                <Sparkles size={12} className="text-indigo-500" />
+                <span>Criado por <span className="text-indigo-400 font-bold">AI</span> no <span className="text-slate-400 font-bold">Google AI Studio</span></span>
+             </div>
+             <span className="hidden md:inline text-slate-800">•</span>
+             <div className="flex items-center gap-1.5">
+                <Code size={12} className="text-blue-500" />
+                <span>Desenvolvido por <span className="text-slate-300 font-bold">Ivo Pinto</span></span>
+             </div>
+          </div>
         </div>
       </footer>
 
