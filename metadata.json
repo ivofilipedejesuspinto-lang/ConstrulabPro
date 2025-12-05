@@ -1,0 +1,5 @@
+{
+  "name": "Construlab Pro - Calculadora de Construção Civil",
+  "description": "Ferramenta profissional para cálculo de áreas de terreno, volumes e estimativa de materiais (betão, aço, inérteis) segundo normas portuguesas. Suporte a sistemas SI e Imperial.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="pt-PT" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Construlab Pro - Calculadora Civil</title>
+    <!-- Google AdSense Script Placeholder -->
+    <!-- Substitua "ca-pub-XXXXXXXXXXXXXXXX" pelo seu ID de publicador quando for para produção -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                850: '#1e293b',
+                900: '#0f172a',
+                950: '#020617',
+              }
+            },
+            screens: {
+              'print': {'raw': 'print'},
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for dark theme */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569; 
+      }
+
+      /* Clean Print Styles */
+      @media print {
+        @page {
+          margin: 0;
+          size: auto;
+        }
+
+        body {
+          background-color: white !important;
+          color: black !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* HIDE MAIN APP ROOT when print mode is active */
+        body.print-mode > #root {
+           display: none !important;
+        }
+
+        /* Ensure the portal container takes over */
+        .print-portal-container {
+           display: block !important;
+           position: absolute !important;
+           top: 0 !important;
+           left: 0 !important;
+           width: 100% !important;
+           height: auto !important;
+           z-index: 99999 !important;
+           background: white !important;
+        }
+
+        /* Ensure links don't show URLs */
+        a[href]:after {
+          content: none !important;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-slate-950 text-slate-200 antialiased min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>
