@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin } from 'lucide-react';
+import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface NavigationMenuProps {
@@ -31,6 +31,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
   }, [isOpen]);
 
   const menuItems = [
+    // Área de Cliente adicionada aqui
+    { id: 'client-area', label: 'Área de Cliente', icon: <UserCircle size={20}/> },
+    { type: 'divider' },
     { id: 'about', label: 'Sobre Nós', icon: <Info size={20}/> },
     { id: 'faq', label: 'Manual & FAQ', icon: <HelpCircle size={20}/> },
     { id: 'contact', label: 'Contactos', icon: <Mail size={20}/> },

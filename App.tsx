@@ -178,6 +178,14 @@ const App: React.FC = () => {
   const handlePageNavigation = (pageId: string) => {
       if (pageId === 'home') {
           setActivePage(null);
+      } else if (pageId === 'client-area') {
+          // Lógica especial para Área de Cliente
+          if (currentUser) {
+             setIsProfileModalOpen(true);
+          } else {
+             showNotification("Inicie sessão para aceder à Área de Cliente.", 'info');
+             setIsProAccessModalOpen(true);
+          }
       } else {
           setActivePage(pageId);
       }
