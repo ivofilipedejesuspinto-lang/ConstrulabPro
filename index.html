@@ -1,10 +1,73 @@
 
 <!DOCTYPE html>
-<html lang="pt-PT" class="dark">
+<html lang="pt-PT" class="dark" prefix="og: http://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Construlab Pro - Calculadora Civil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO -->
+    <title>CalcConstruPRO | Calculadora de Construção Civil & Orçamentos de Obras</title>
+    <meta name="title" content="CalcConstruPRO | Calculadora de Construção Civil & Orçamentos de Obras" />
+    <meta name="description" content="A ferramenta definitiva para Engenheiros Civis e Empreiteiros. Calcule betão, aço, lajes, áreas e materiais de construção em segundos. Exporte relatórios PDF profissionais, gira projetos na nuvem e otimize os seus orçamentos de obra. Grátis para testar." />
+    <meta name="keywords" content="calculadora construção civil, cálculo de materiais, orçamento de obras, betão armado, engenharia civil, estimativa de aço, quantitativos, construção portugal, app obra, mestre de obras, cálculo laje, cimento e areia, conversor medidas obra, software engenharia, calcconstrupro" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="CalcConstruPRO" />
+    <meta name="language" content="Portuguese" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Open Graph / Facebook / LinkedIn (Social SEO) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://calcconstru.pro/" />
+    <meta property="og:title" content="CalcConstruPRO - A Calculadora do Engenheiro Civil" />
+    <meta property="og:description" content="Simplifique os seus cálculos de obra. Estime materiais, desenhe geometrias e gere relatórios técnicos em PDF. A ferramenta essencial para profissionais da construção." />
+    <meta property="og:image" content="https://calcconstru.pro/og-image.jpg" /> <!-- Substituir por imagem real -->
+    <meta property="og:locale" content="pt_PT" />
+    <meta property="og:site_name" content="CalcConstruPRO" />
+
+    <!-- Twitter Card -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://calcconstru.pro/" />
+    <meta property="twitter:title" content="CalcConstruPRO | Calculadora Civil Profissional" />
+    <meta property="twitter:description" content="Orçamentos precisos e cálculo de materiais em segundos. A ferramenta nº1 para engenharia civil." />
+    <meta property="twitter:image" content="https://calcconstru.pro/twitter-image.jpg" />
+
+    <!-- Mobile App Capabilities (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CalcConstruPRO" />
+    <meta name="application-name" content="CalcConstruPRO" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Structured Data (JSON-LD) - The "Secret Weapon" for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CalcConstruPRO",
+      "headline": "Calculadora Profissional de Construção Civil",
+      "operatingSystem": "Web, iOS, Android",
+      "applicationCategory": "BusinessApplication",
+      "description": "Aplicação web progressiva para cálculo de materiais de construção, estimativa de betão armado, aço e gestão de orçamentos de obra.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "category": "Freemium"
+      },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Civil Engineers, Architects, Contractors, Construction Workers"
+      },
+      "featureList": "Cálculo de Áreas, Estimativa de Betão, Lista de Materiais, Exportação PDF, Gestão de Projetos Cloud",
+      "author": {
+        "@type": "Organization",
+        "name": "CalcConstruPRO Team",
+        "url": "https://calcconstru.pro"
+      }
+    }
+    </script>
+    
     <!-- Google AdSense Script Placeholder -->
     <!-- Substitua "ca-pub-XXXXXXXXXXXXXXXX" pelo seu ID de publicador quando for para produção -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
@@ -91,7 +154,9 @@
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.1"
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.1",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }
 </script>

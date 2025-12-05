@@ -1,13 +1,23 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-// INSTRUCTIONS:
-// 1. Go to https://supabase.com and create a new project.
-// 2. Go to Project Settings > API.
-// 3. Copy "Project URL" and "anon public" Key.
-// 4. Replace the placeholders below.
+// NOTA: Para DEPLOY, deve configurar estas variáveis no painel do seu alojamento (Netlify/Vercel).
+// Não as escreva diretamente aqui para produção.
 
-const SUPABASE_URL = 'https://xdzngtwyfdinjdiantny.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhkem5ndHd5ZmRpbmpkaWFudG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4ODM2NzUsImV4cCI6MjA4MDQ1OTY3NX0.LKztn8mxbwrD6uqTO7UAAGPCgd6bv0KFwQSOC4VUwww';
+// Fix: Safely access env to prevent crash if import.meta.env is undefined
+const env = (import.meta as any).env || {};
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || '';
+
+// Flag para saber se estamos conectados ao backend real ou em modo demonstração
+export const isConfigured = !!(SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'placeholder');
+
+if (!isConfigured) {
+    console.warn("⚠️ MODO DEMO ATIVO: Credenciais Supabase não detetadas. A usar Mock Service (apenas local).");
+}
+
+// Prevent createClient from crashing with empty strings
+const validUrl = SUPABASE_URL || 'https://placeholder.supabase.co';
+const validKey = SUPABASE_ANON_KEY || 'placeholder';
+
+export const supabase = createClient(validUrl, validKey);

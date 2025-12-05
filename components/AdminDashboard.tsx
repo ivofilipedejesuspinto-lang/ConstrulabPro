@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { AuthService } from '../services/authService';
 import { User, UserRole } from '../types';
-import { Shield, Search, User as UserIcon, CheckCircle, XCircle, AlertTriangle, RefreshCw, X, Trash2, Ban } from 'lucide-react';
+import { Shield, Search, User as UserIcon, CheckCircle, XCircle, AlertTriangle, RefreshCw, X, Trash2, Ban, Edit, Save } from 'lucide-react';
 
 interface AdminDashboardProps {
   currentUser: User;
@@ -14,6 +14,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+
+  // Edit State
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', companyName: '', role: 'free' as UserRole });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -39,7 +44,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
     }
   }, [notification]);
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const handleEditClick = (user: User) => {
+      setEditingUser(user);
+      setEditForm({
+          name: user.name,
+          companyName: user.companyName || '',
+          role: user.role
+      });
+  };
+
+  const handleSaveEdit = async () => {
+      if (!editingUser) return;
+      setSavingEdit(true);
+      try {
+          // 1. Update Profile Details
+          await AuthService.adminUpdateUserProfile(editingUser.id, {
+              name: editForm.name,
+              companyName: editForm.companyName
+          });
+
+          // 2. Update Role (if changed)
+          if (editForm.role !== editingUser.role) {
+              await AuthService.updateUserRole(editingUser.id, editForm.role);
+          }
+
+          setNotification({ msg: "Utilizador atualizado!", type: 'success' });
+          setEditingUser(null);
+          fetchUsers();
+      } catch (e) {
+          setNotification({ msg: "Erro ao guardar alterações.", type: 'error' });
+      } finally {
+          setSavingEdit(false);
+      }
+  };
+
+  const handleRoleChangeDirect = async (userId: string, newRole: UserRole) => {
     try {
       await AuthService.updateUserRole(userId, newRole);
       setNotification({ msg: `Cargo alterado para ${newRole.toUpperCase()}`, type: 'success' });
@@ -50,7 +89,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
   };
 
   const handleDeleteUser = async (userId: string) => {
-      if (!window.confirm("Tem a certeza? Isto apagará o perfil e projetos do utilizador.")) return;
+      if (!window.confirm("ATENÇÃO: Isto apagará PERMANENTEMENTE o perfil, projetos e dados do utilizador. Continuar?")) return;
       
       try {
           await AuthService.deleteUser(userId);
@@ -104,7 +143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6 overflow-auto max-w-7xl mx-auto w-full">
+      <div className="flex-1 p-6 overflow-auto max-w-7xl mx-auto w-full relative">
         
         {/* Search */}
         <div className="mb-6 relative">
@@ -125,8 +164,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
               <tr>
                 <th className="p-4">Utilizador</th>
                 <th className="p-4">Cargo (Role)</th>
+                <th className="p-4">Empresa (White-Label)</th>
                 <th className="p-4">Estado</th>
-                <th className="p-4">Data Registo</th>
                 <th className="p-4 text-right">Ações</th>
               </tr>
             </thead>
@@ -154,7 +193,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                   <td className="p-4">
                     <select 
                         value={user.role} 
-                        onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                        onChange={(e) => handleRoleChangeDirect(user.id, e.target.value as UserRole)}
                         className={`bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs font-bold uppercase focus:outline-none focus:border-blue-500 ${
                             user.role === 'admin' ? 'text-red-400 border-red-900/50' :
                             user.role === 'pro' ? 'text-amber-400 border-amber-900/50' :
@@ -170,6 +209,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                     </select>
                   </td>
                   <td className="p-4">
+                      {user.companyName ? (
+                          <span className="text-white font-medium">{user.companyName}</span>
+                      ) : (
+                          <span className="text-slate-600 italic text-xs">Não definido</span>
+                      )}
+                  </td>
+                  <td className="p-4">
                     {user.role === 'banned' ? 
                        <span className="flex items-center gap-1.5 text-red-500 bg-red-950/30 w-fit px-2 py-0.5 rounded-full text-[10px] font-medium"><Ban size={10} /> BANIDO</span>
                     : user.subscriptionStatus === 'active' 
@@ -177,21 +223,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                       : <span className="flex items-center gap-1.5 text-slate-500"><XCircle size={12} /> Inativo</span>
                     }
                   </td>
-                  <td className="p-4 font-mono text-xs">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
-                       {/* Ban Button (Toggle) */}
-                       {user.role !== 'admin' && user.role !== 'banned' && (
-                           <button 
-                            onClick={() => handleRoleChange(user.id, 'banned')}
-                            className="p-1.5 rounded hover:bg-red-900/20 text-slate-600 hover:text-red-400 transition-colors" 
-                            title="Banir"
-                           >
-                            <Ban size={16} />
-                           </button>
-                       )}
+                       {/* Edit Button */}
+                       <button 
+                         onClick={() => handleEditClick(user)}
+                         className="p-1.5 rounded hover:bg-blue-600/20 hover:text-blue-400 text-slate-500 transition-colors"
+                         title="Editar Detalhes"
+                       >
+                           <Edit size={16} />
+                       </button>
+
                        {/* Delete Button */}
                        {user.id !== currentUser.id && (
                            <button 
@@ -209,6 +251,65 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
             </tbody>
           </table>
         </div>
+
+        {/* EDIT MODAL */}
+        {editingUser && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+                <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl p-6 animate-in zoom-in duration-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-white">Editar Utilizador</h3>
+                        <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-white"><X size={24}/></button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Email (Read Only)</label>
+                            <input type="text" value={editingUser.email} disabled className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-500 mt-1 cursor-not-allowed"/>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Nome</label>
+                            <input 
+                                type="text" 
+                                value={editForm.name} 
+                                onChange={e => setEditForm({...editForm, name: e.target.value})}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none mt-1"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Empresa (White-Label)</label>
+                            <input 
+                                type="text" 
+                                value={editForm.companyName} 
+                                onChange={e => setEditForm({...editForm, companyName: e.target.value})}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none mt-1"
+                                placeholder="Nome da Empresa"
+                            />
+                        </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Cargo</label>
+                            <select 
+                                value={editForm.role}
+                                onChange={e => setEditForm({...editForm, role: e.target.value as UserRole})}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none mt-1"
+                            >
+                                <option value="free">Free</option>
+                                <option value="pro">Pro</option>
+                                <option value="admin">Admin</option>
+                                <option value="banned">Banido</option>
+                            </select>
+                        </div>
+
+                        <div className="pt-4 flex gap-3">
+                            <button onClick={() => setEditingUser(null)} className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 font-bold hover:bg-slate-800">Cancelar</button>
+                            <button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 flex items-center justify-center gap-2">
+                                {savingEdit ? <RefreshCw className="animate-spin" size={18}/> : <Save size={18}/>} Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </div>
   );

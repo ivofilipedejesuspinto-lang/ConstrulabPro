@@ -29,7 +29,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [points, setPoints] = useState<Point[]>([]);
   const [isClosed, setIsClosed] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [scale, setScale] = useState<number>(10); // 10 pixels = 1 meter
+  const [scale, setScale] = useState<number>(15); // Default scale 15 px/m
   const [mousePos, setMousePos] = useState<Point>({ x: 0, y: 0, id: -1 });
   
   // Local state for the project name input

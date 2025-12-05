@@ -4,14 +4,16 @@ import { UnitSystem, User, ProjectData, Project } from './types';
 import { CanvasArea } from './components/CanvasArea';
 import { VolumeMaterials } from './components/VolumeMaterials';
 import { AdUnit } from './components/AdUnit';
-import { AuthModal } from './components/AuthModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProfileModal } from './components/ProfileModal';
 import { NotificationBanner, NotificationType } from './components/NotificationBanner';
 import { SideCalculator } from './components/SideCalculator';
+import { NavigationMenu } from './components/NavigationMenu';
+import { AboutPage, ContactPage, FaqPage, PrivacyPage, TermsPage } from './components/StaticPages';
+import { ProAccessModal } from './components/ProAccessModal';
 import { AuthService } from './services/authService';
 import { ProjectService } from './services/projectService';
-import { Construction, Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler } from 'lucide-react';
+import { Construction, Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu } from 'lucide-react';
 
 const App: React.FC = () => {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(UnitSystem.SI);
@@ -19,13 +21,14 @@ const App: React.FC = () => {
   
   // User State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProAccessModalOpen, setIsProAccessModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Payment State
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  // Navigation / Page State
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activePage, setActivePage] = useState<string | null>(null);
 
   // --- CLOUD / MODAL STATE ---
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
@@ -39,8 +42,24 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Check for existing session in Supabase on load
-    handleSyncSession();
+    handleSyncSession().then((user) => {
+        trackUsage(user);
+    });
   }, []);
+
+  const trackUsage = (user: User | null) => {
+      const isPro = user?.role === 'pro' || user?.role === 'admin';
+      
+      if (!isPro) {
+          // Rebranded Key
+          const visits = Number(localStorage.getItem('calcconstrupro_visits') || 0) + 1;
+          localStorage.setItem('calcconstrupro_visits', visits.toString());
+          
+          if (visits === 3) {
+              setTimeout(() => setIsProAccessModalOpen(true), 2000); // Small delay for effect
+          }
+      }
+  };
 
   const handleSyncSession = async () => {
     setIsSyncing(true);
@@ -48,13 +67,15 @@ const App: React.FC = () => {
       const user = await AuthService.syncSession();
       if (user) {
         setCurrentUser(user);
+        return user;
       } else {
-        // If session is invalid (e.g. after DB reset), clear everything
         setCurrentUser(null);
+        return null;
       }
     } catch (e) {
       console.error("Session sync error", e);
       setCurrentUser(null);
+      return null;
     } finally {
       setIsSyncing(false);
     }
@@ -75,48 +96,25 @@ const App: React.FC = () => {
     showNotification("Sessão terminada.", 'info');
   };
 
-  const handlePayment = async () => {
-    if (!currentUser) {
-      setIsAuthModalOpen(true);
-      setShowUpgradeModal(false);
-      return;
-    }
-
-    try {
-      await AuthService.simulatePaymentSuccess(currentUser.id);
+  const handlePaymentSuccess = async () => {
       await handleSyncSession();
-      setShowUpgradeModal(false);
-      showNotification("Pagamento de 20€ realizado com sucesso! Bem-vindo ao Construlab PRO.", 'success');
-    } catch (e) {
-      showNotification("Erro ao processar pagamento.", 'error');
-    }
+      showNotification("Acesso VITALÍCIO ativado! Bem-vindo ao clube CalcConstruPRO.", 'success');
   };
 
   // --- CLOUD HANDLERS ---
-
-  // DIRECT SAVE HANDLER - Centralized Validation
   const onSaveRequest = async (data: ProjectData, name: string) => {
-      // 1. Validation: Login
-      if (!currentUser) {
-          showNotification("Inicie sessão para guardar projetos na nuvem.", 'info');
-          setIsAuthModalOpen(true);
+      if (!currentUser || !isPro) {
+          setIsProAccessModalOpen(true);
+          if (!currentUser) showNotification("Crie conta ou inicie sessão para continuar.", 'info');
+          else showNotification("Funcionalidade exclusiva para membros PRO.", 'info');
           return;
       }
 
-      // 2. Validation: Upgrade Check
-      if (!isPro) {
-          setShowUpgradeModal(true);
-          showNotification("Funcionalidade PRO. Subscreva para guardar.", 'info');
-          return;
-      }
-
-      // 3. Validation: Geometry
       if (!data.points || data.points.length < 3) {
           showNotification("Desenhe uma geometria fechada (mín. 3 pontos) antes de guardar.", 'error');
           return;
       }
 
-      // 4. Validation: Name
       if (!name || !name.trim()) { 
         showNotification("Escreva o nome do projeto no topo da área de desenho.", 'error'); 
         return; 
@@ -129,7 +127,6 @@ const App: React.FC = () => {
           showNotification(`Projeto "${name}" guardado com sucesso!`, 'success');
       } catch (e: any) {
           console.error(e);
-          // Handle the "User not found" error that happens after DB reset
           if (e.message && (e.message.includes("violates foreign key") || e.message.includes("user_id"))) {
              showNotification("Erro de sessão. Por favor faça logout e entre novamente.", 'error');
           } else {
@@ -141,13 +138,8 @@ const App: React.FC = () => {
   };
 
   const onLoadRequest = async () => {
-      if (!currentUser) {
-          showNotification("Inicie sessão para carregar projetos.", 'info');
-          setIsAuthModalOpen(true);
-          return;
-      }
-      if (!isPro) {
-          setShowUpgradeModal(true);
+      if (!currentUser || !isPro) {
+          setIsProAccessModalOpen(true);
           return;
       }
 
@@ -165,7 +157,7 @@ const App: React.FC = () => {
 
   const onConfirmLoad = (project: Project) => {
       setProjectToLoad(project.data);
-      setCurrentProjectName(project.name); // Set active name
+      setCurrentProjectName(project.name);
       setIsLoadModalOpen(false);
       showNotification(`Projeto "${project.name}" carregado.`, 'success');
   };
@@ -182,6 +174,13 @@ const App: React.FC = () => {
       }
   };
 
+  const handlePageNavigation = (pageId: string) => {
+      if (pageId === 'home') {
+          setActivePage(null);
+      } else {
+          setActivePage(pageId);
+      }
+  };
 
   if (isAdminPanelOpen && currentUser?.role === 'admin') {
     return <AdminDashboard currentUser={currentUser} onClose={() => setIsAdminPanelOpen(false)} />;
@@ -190,7 +189,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-blue-500 selection:text-white pb-20 print:pb-0 print:block relative">
       
-      {/* Global Notification */}
       {notification && (
         <NotificationBanner 
           message={notification.msg} 
@@ -199,21 +197,38 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Header - Hidden on Print */}
+      <NavigationMenu 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
+        onNavigate={handlePageNavigation}
+        activePage={activePage}
+      />
+
+      {activePage === 'about' && <AboutPage onClose={() => setActivePage(null)} />}
+      {activePage === 'faq' && <FaqPage onClose={() => setActivePage(null)} />}
+      {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
+      {activePage === 'terms' && <TermsPage onClose={() => setActivePage(null)} />}
+      {activePage === 'privacy' && <PrivacyPage onClose={() => setActivePage(null)} />}
+
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-900/20">
+          <div className="flex items-center gap-4">
+            <button 
+                onClick={() => setIsMenuOpen(true)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                title="Menu Principal"
+            >
+                <Menu size={24} />
+            </button>
+
+            <div className="flex items-center gap-4 border-l border-slate-700 pl-4">
+              <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-900/20 hidden sm:block">
                  <Construction className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="text-xl md:text-2xl font-bold text-white leading-tight tracking-tight">Construlab Pro</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-white leading-tight tracking-tight">CalcConstruPRO</h1>
                 <div className="text-xs text-blue-400 font-mono tracking-widest uppercase font-semibold">Calculadora Civil</div>
               </div>
-            </div>
-            <div className="hidden md:flex items-center ml-8 pl-8 border-l border-slate-700 h-10">
-               <span className="text-base text-slate-400 font-light tracking-wide">Lages e Pilares</span>
             </div>
           </div>
 
@@ -251,7 +266,7 @@ const App: React.FC = () => {
                     </div>
                  ) : (
                     <button 
-                      onClick={() => setShowUpgradeModal(true)}
+                      onClick={() => setIsProAccessModalOpen(true)}
                       className="hidden sm:flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg transition-all"
                     >
                       <Crown size={14} /> UPGRADE
@@ -285,7 +300,7 @@ const App: React.FC = () => {
               </div>
             ) : (
               <button 
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={() => setIsProAccessModalOpen(true)}
                 className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 transition-all"
               >
                 <LogIn size={16} /> Entrar
@@ -295,11 +310,8 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content Container - Using Flex Column for structural spacing */}
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-8 flex flex-col gap-8 print:block print:p-0 print:max-w-none">
         
-        {/* TOP SECTION: Intro Text & Header Ad (Full Width) */}
-        {/* This ensures the grid below starts aligned at the top */}
         <div className="flex flex-col gap-8 print:hidden">
             <AdUnit id="ad-top" slotType="header" isPro={isPro} />
 
@@ -310,16 +322,14 @@ const App: React.FC = () => {
             </div>
         </div>
         
-        {/* GRID SECTION: Canvas/Volume vs Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
           
-          {/* Left Column Content */}
           <div className="flex flex-col gap-8 print:block">
             <CanvasArea 
               unitSystem={unitSystem} 
               onAreaCalculated={setCalculatedAreaM2} 
               isPro={isPro}
-              onRequestUpgrade={() => setShowUpgradeModal(true)}
+              onRequestUpgrade={() => setIsProAccessModalOpen(true)}
               onSaveRequest={onSaveRequest}
               onLoadRequest={onLoadRequest}
               externalLoadData={projectToLoad}
@@ -334,18 +344,16 @@ const App: React.FC = () => {
               unitSystem={unitSystem} 
               importedAreaM2={calculatedAreaM2}
               isPro={isPro}
-              onRequestUpgrade={() => setShowUpgradeModal(true)}
+              user={currentUser}
+              onRequestUpgrade={() => setIsProAccessModalOpen(true)}
             />
           </div>
 
-          {/* Right Column Content (Sidebar) */}
           <aside className="hidden lg:flex flex-col gap-6 print:hidden h-full">
              <AdUnit id="ad-sidebar" slotType="sidebar" isPro={isPro} />
              
-             {/* Sticky Group: Conversions + Calculator */}
              <div className="sticky top-24 flex flex-col gap-6">
                 
-                {/* Conversions Box */}
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                   <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-lg">
                     <Ruler size={20} /> Conversões Rápidas
@@ -358,15 +366,12 @@ const App: React.FC = () => {
                   </ul>
                 </div>
 
-                {/* Calculator Box */}
                 <SideCalculator />
              </div>
           </aside>
 
         </div>
 
-        {/* BOTTOM SECTION: Legal Warning (Full Width) */}
-        {/* This sits below the grid, aligned with the full container width */}
         <div className="p-6 border border-yellow-900/50 bg-yellow-900/10 rounded-xl flex gap-4 print:hidden">
              <Info className="text-yellow-600 flex-shrink-0" size={28} />
              <div className="text-base text-yellow-500/80 leading-relaxed">
@@ -376,24 +381,22 @@ const App: React.FC = () => {
 
       </main>
 
-      {/* Footer - Hidden on Print */}
       <footer className="border-t border-slate-800 mt-16 py-10 bg-slate-950 print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-slate-500 text-base">
-            © {new Date().getFullYear()} Construlab Pro. Desenvolvido por Ivo Pinto • Criado com Google AI Studio
+            © {new Date().getFullYear()} CalcConstruPRO. Desenvolvido por Ivo Pinto • Criado com Google AI Studio
           </p>
         </div>
       </footer>
 
-      {/* --- GLOBAL MODALS --- */}
-
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
+      <ProAccessModal 
+        isOpen={isProAccessModalOpen} 
+        onClose={() => setIsProAccessModalOpen(false)} 
+        user={currentUser}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
-          if (showUpgradeModal) setShowUpgradeModal(true);
         }}
+        onPaymentSuccess={handlePaymentSuccess}
       />
       
       {currentUser && (
@@ -401,10 +404,10 @@ const App: React.FC = () => {
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
           user={currentUser}
+          onUserUpdate={(updatedUser) => setCurrentUser(updatedUser)}
         />
       )}
 
-      {/* LOAD MODAL */}
       {isLoadModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
              <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl p-6 relative">
@@ -437,44 +440,6 @@ const App: React.FC = () => {
                      )}
                  </div>
              </div>
-        </div>
-      )}
-
-      {/* UPGRADE MODAL */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-sm print:hidden">
-           <div className="bg-slate-900 border border-amber-500/30 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
-             <button 
-               onClick={() => setShowUpgradeModal(false)}
-               className="absolute top-4 right-4 text-slate-400 hover:text-white z-10"
-             >
-               <X size={24} />
-             </button>
-             <div className="p-8 text-center">
-               <div className="bg-amber-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-500">
-                 <Crown size={40} fill="currentColor" />
-               </div>
-               <h2 className="text-3xl font-bold text-white mb-2">Plano Construlab PRO</h2>
-               <div className="text-5xl font-bold text-white mb-2 mt-6">20€ <span className="text-lg font-normal text-slate-400">/ ano</span></div>
-               <p className="text-slate-400 text-sm mb-8">IVA incluído. Acesso imediato.</p>
-               <ul className="text-left text-base text-slate-300 space-y-4 mb-8 bg-slate-950/50 p-6 rounded-xl">
-                 <li className="flex items-center gap-3"><span className="text-green-400 font-bold">✓</span> Sem anúncios</li>
-                 <li className="flex items-center gap-3"><span className="text-green-400 font-bold">✓</span> Exportar relatório PDF</li>
-                 <li className="flex items-center gap-3"><span className="text-green-400 font-bold">✓</span> Enviar por Email</li>
-                 <li className="flex items-center gap-3"><span className="text-green-400 font-bold">✓</span> Guardar Projetos na Nuvem</li>
-               </ul>
-               <button 
-                 onClick={handlePayment}
-                 className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-700 text-white text-lg font-bold hover:shadow-lg hover:shadow-amber-500/25 transition-all transform hover:-translate-y-1"
-               >
-                 Subscrever Agora
-               </button>
-               <p className="text-xs text-slate-600 mt-6 flex justify-center items-center gap-2">
-                 <Shield size={12} /> Pagamento seguro via Stripe
-               </p>
-             </div>
-           </div>
         </div>
       )}
     </div>

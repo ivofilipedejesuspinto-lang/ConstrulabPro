@@ -72,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-white">{isLogin ? 'Bem-vindo' : 'Criar Conta'}</h2>
               <p className="text-slate-400 text-sm mt-2">
-                {isLogin ? 'Aceda à sua conta Construlab' : 'Junte-se para guardar projetos e mais.'}
+                {isLogin ? 'Aceda à sua conta CalcConstruPRO' : 'Junte-se para guardar projetos e mais.'}
               </p>
             </div>
 

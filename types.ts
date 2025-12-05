@@ -11,9 +11,12 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  subscriptionStatus: 'active' | 'inactive' | 'past_due' | 'banned';
+  subscriptionStatus: 'active' | 'inactive' | 'past_due' | 'banned' | 'trial';
   subscriptionExpiry?: string; // ISO Date
   createdAt: string;
+  // White-label fields
+  companyName?: string;
+  companyLogoUrl?: string;
 }
 
 export interface Point {
@@ -35,6 +38,7 @@ export interface Project {
   name: string;
   data: ProjectData;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface MaterialConfig {

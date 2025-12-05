@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { UnitSystem, MaterialConfig } from '../types';
+import { UnitSystem, MaterialConfig, User } from '../types';
 import { CONVERSIONS, DEFAULT_MATERIALS, LABELS } from '../constants';
 import { convertValue, formatNumber } from '../utils/math';
 import { Settings, Calculator, Droplets, Box, Layers, Container, Scan, Download, Mail, Lock, Crown, ChevronDown, ChevronUp } from 'lucide-react';
@@ -10,21 +10,21 @@ interface VolumeMaterialsProps {
   unitSystem: UnitSystem;
   importedAreaM2: number;
   isPro: boolean;
+  user: User | null; // Added User
   onRequestUpgrade: () => void;
 }
 
-export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, onRequestUpgrade }) => {
+export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, user, onRequestUpgrade }) => {
   const [mode, setMode] = useState<'box' | 'slab'>('slab');
   const [length, setLength] = useState<string>('10');
   const [width, setWidth] = useState<string>('5');
   const [height, setHeight] = useState<string>('0.15');
-  const [showSteelDetails, setShowSteelDetails] = useState(true); // Default to open for better visibility
+  const [showSteelDetails, setShowSteelDetails] = useState(true);
   
   const [config, setConfig] = useState<MaterialConfig>(DEFAULT_MATERIALS);
   const [showConfig, setShowConfig] = useState(false);
   const [volumeM3, setVolumeM3] = useState(0);
 
-  // State for Print Preview
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   useEffect(() => {
@@ -80,12 +80,7 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
       }
   }, [mode, matSteelMin, matSteelMax]);
 
-  // Handle Print Click
   const handlePrintClick = () => {
-    if (!isPro) {
-      if (onRequestUpgrade) onRequestUpgrade();
-      return;
-    }
     setShowPrintPreview(true);
   };
 
@@ -95,8 +90,8 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
       return;
     }
     
-    const subject = "Relatório de Materiais - Construlab Pro";
-    const bodyText = `Volume Total: ${formatNumber(displayVolume, 3)} ${units.volume}\nCimento: ${formatNumber(convertValue(matCementKg, 'weight', unitSystem), 1)} ${units.weight}\nGerado por Construlab Pro`;
+    const subject = "Relatório de Materiais - CalcConstruPRO";
+    const bodyText = `Volume Total: ${formatNumber(displayVolume, 3)} ${units.volume}\nCimento: ${formatNumber(convertValue(matCementKg, 'weight', unitSystem), 1)} ${units.weight}\nGerado por CalcConstruPRO`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
   };
 
@@ -209,7 +204,6 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
         )}
 
         <div className="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
-           {/* Cards for Materials */}
            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-800/40 to-slate-800/10 rounded-2xl border border-slate-800 transition-colors">
               <div className="flex items-center gap-4">
                  <div className="w-1.5 h-12 bg-slate-500 rounded-full"></div>
@@ -229,9 +223,7 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
               </div>
            </div>
 
-           {/* High Contrast Steel Section */}
            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-red-500/30 flex flex-col transition-all overflow-hidden relative group">
-              {/* Decorative accent */}
               <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
               
               <div className={`p-5 pl-7 flex justify-between items-start cursor-pointer ${showSteelDetails ? 'pb-2' : ''}`} onClick={() => setShowSteelDetails(!showSteelDetails)}>
@@ -303,9 +295,9 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
             <button 
               onClick={handlePrintClick}
               type="button"
-              className={`flex items-center justify-center gap-3 py-3 rounded-xl text-sm font-bold border transition-all ${isPro ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : 'bg-slate-900 text-slate-500 border-slate-800 opacity-70 hover:opacity-100'}`}
+              className={`flex items-center justify-center gap-3 py-3 rounded-xl text-sm font-bold border transition-all ${'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'}`}
             >
-              {isPro ? <Download size={18} /> : <Lock size={16} />}
+              <Download size={18} />
               <span>Imprimir PDF</span>
             </button>
             <button 
@@ -322,7 +314,6 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
       </div>
     </div>
     
-    {/* Render Print Preview Modal when active */}
     {showPrintPreview && (
       <PrintPreviewModal 
         data={{
@@ -339,6 +330,7 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
             steelBreakdown,
             mode
         }}
+        user={user} // Passed user here
         onClose={() => setShowPrintPreview(false)}
       />
     )}
