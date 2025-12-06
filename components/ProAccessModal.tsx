@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { AuthService } from '../services/authService';
 import { X, LogIn, UserPlus, Loader2, Lock, AlertCircle, Crown, Check, Shield, Clock, CreditCard, Sparkles, ExternalLink } from 'lucide-react';
@@ -30,8 +30,36 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
   // Payment/Trial State
   const [trialLoading, setTrialLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'trial' | null>(null);
+
+  // Reset state when modal opens
+  useEffect(() => {
+      if (isOpen) {
+          setPendingAction(null);
+          setAuthError('');
+      }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // --- HELPER: ACTIVATE TRIAL ---
+  const activateTrialForUser = async (userId: string) => {
+      setTrialLoading(true);
+      try {
+          await AuthService.activateTrial(userId);
+          const updatedUser = await AuthService.syncSession();
+          if (updatedUser) {
+              onLoginSuccess(updatedUser);
+              onClose(); // Close modal on success
+          }
+      } catch (e) {
+          console.error(e);
+          setAuthError("Erro ao ativar trial. Tente novamente.");
+      } finally {
+          setTrialLoading(false);
+          setPendingAction(null);
+      }
+  };
 
   // --- AUTH HANDLERS ---
   const handleAuthSubmit = async (e: React.FormEvent) => {
@@ -55,7 +83,14 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       
       onLoginSuccess(loggedUser);
       
-      // Se for PRO ou ADMIN, fecha a modal imediatamente
+      // 1. Se havia um pedido de Trial pendente, ativa-o agora
+      if (pendingAction === 'trial') {
+          // Não fechamos o modal, iniciamos o trial
+          await activateTrialForUser(loggedUser.id);
+          return;
+      }
+
+      // 2. Se for login normal e já for PRO, fecha
       if (loggedUser.role === 'pro' || loggedUser.role === 'admin') {
           onClose();
           return;
@@ -72,26 +107,17 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
     }
   };
 
-  // --- TRIAL HANDLER ---
-  const handleStartTrial = async () => {
+  // --- TRIAL BUTTON CLICK ---
+  const handleStartTrialClick = async () => {
       if (!user) {
-          setAuthError("Por favor, crie conta ou inicie sessão primeiro para ativar o trial.");
+          // Se não tem user, prepara o terreno para o registo
+          setPendingAction('trial');
+          setIsLogin(false); // Muda para o formulário de registo
+          setAuthError("Para iniciar os 7 dias grátis, crie a sua conta abaixo 👇");
           return;
       }
-
-      setTrialLoading(true);
-      try {
-          await AuthService.activateTrial(user.id);
-          const updatedUser = await AuthService.syncSession();
-          if (updatedUser) {
-              onLoginSuccess(updatedUser);
-              onClose();
-          }
-      } catch (e) {
-          alert("Erro ao ativar trial.");
-      } finally {
-          setTrialLoading(false);
-      }
+      // Se já tem user, ativa direto
+      await activateTrialForUser(user.id);
   };
 
   // --- STRIPE SMART LINK HANDLER ---
@@ -116,7 +142,6 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       params.append("prefilled_promo_code", "EARLYBIRD"); 
 
       // 3. Redirecionamento
-      // Pequeno timeout para dar feedback visual ao utilizador
       setTimeout(() => {
           window.location.href = `${baseUrl}?${params.toString()}`;
       }, 800);
@@ -165,10 +190,15 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                         </div>
                     </div>
 
-                    {!isProActive && (
+                    {!isProActive && !trialLoading && (
                        <p className="text-blue-400 text-sm font-bold animate-pulse">
                            Complete a subscrição ao lado &rarr;
                        </p>
+                    )}
+                    {trialLoading && (
+                        <div className="text-blue-400 text-sm font-bold flex justify-center items-center gap-2">
+                            <Loader2 className="animate-spin"/> A ativar período de teste...
+                        </div>
                     )}
                 </div>
             ) : (
@@ -177,7 +207,10 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                     <div className="mb-8">
                         <h2 className="text-3xl font-bold text-white mb-2">{isLogin ? 'Bem-vindo de volta' : 'Crie a sua conta'}</h2>
                         <p className="text-slate-400">
-                            {isLogin ? 'Aceda aos seus projetos e configurações.' : 'Registe-se para começar a desenhar.'}
+                            {pendingAction === 'trial' 
+                                ? <span className="text-blue-400 font-bold">Registe-se para iniciar os 7 dias grátis.</span>
+                                : (isLogin ? 'Aceda aos seus projetos e configurações.' : 'Registe-se para começar a desenhar.')
+                            }
                         </p>
                     </div>
 
@@ -224,9 +257,9 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                         </div>
 
                         {authError && (
-                            <div className="bg-red-950/30 p-3 rounded-lg border border-red-900/50 flex items-start gap-3">
-                                <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={16} />
-                                <div className="text-red-300 text-xs leading-relaxed">{authError}</div>
+                            <div className={`p-3 rounded-lg border flex items-start gap-3 animate-in slide-in-from-top-2 ${pendingAction === 'trial' ? 'bg-blue-900/20 border-blue-500/30' : 'bg-red-950/30 border-red-900/50'}`}>
+                                {pendingAction === 'trial' ? <Clock className="text-blue-400 shrink-0 mt-0.5" size={16}/> : <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={16} />}
+                                <div className={`${pendingAction === 'trial' ? 'text-blue-200' : 'text-red-300'} text-xs leading-relaxed`}>{authError}</div>
                             </div>
                         )}
 
@@ -236,13 +269,13 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                             className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all flex items-center justify-center gap-2 text-base shadow-lg shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {authLoading ? <Loader2 size={20} className="animate-spin" /> : (isLogin ? <LogIn size={20} /> : <UserPlus size={20} />)}
-                            {isLogin ? 'Entrar na Conta' : 'Criar Conta Grátis'}
+                            {isLogin ? 'Entrar na Conta' : (pendingAction === 'trial' ? 'Criar Conta e Iniciar Trial' : 'Criar Conta Grátis')}
                         </button>
                     </form>
                     
                     <div className="mt-6 pt-6 border-t border-slate-800/50 text-center">
                         <button 
-                            onClick={() => { setIsLogin(!isLogin); setAuthError(''); }}
+                            onClick={() => { setIsLogin(!isLogin); setAuthError(''); setPendingAction(null); }}
                             className="text-sm text-slate-400 hover:text-white hover:underline transition-colors"
                         >
                             {isLogin ? 'Ainda não tem conta? Registe-se aqui.' : 'Já tem conta? Faça login.'}
@@ -349,9 +382,9 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
 
                     {!isProActive && (
                         <button 
-                            onClick={handleStartTrial}
-                            disabled={trialLoading || !user}
-                            className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${!user ? 'opacity-50 cursor-not-allowed text-slate-600' : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700'}`}
+                            onClick={handleStartTrialClick}
+                            disabled={trialLoading}
+                            className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${pendingAction === 'trial' ? 'bg-blue-900/20 text-blue-300 ring-2 ring-blue-500/50' : (!user ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700' : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700')}`}
                         >
                              {trialLoading ? <Loader2 className="animate-spin" size={16}/> : <><Clock size={16}/> Testar Grátis por 7 Dias</>}
                         </button>
