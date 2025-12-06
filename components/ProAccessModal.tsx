@@ -129,16 +129,22 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       // 1. Base URL do seu Payment Link
       const baseUrl = "https://buy.stripe.com/eVqfZg0HP5BddFN5O3fw401";
       
-      // 2. Construção dos Parâmetros
+      // 2. Construção dos Parâmetros (METADATA)
       const params = new URLSearchParams();
       
-      // Email do utilizador (para ele não ter de escrever novamente)
-      params.append("prefilled_email", user.email);
-      
-      // ID do Utilizador (para sabermos quem pagou no futuro)
+      // CRÍTICO: O ID do utilizador na nossa base de dados. 
+      // É isto que liga o pagamento ao utilizador nos Webhooks.
       params.append("client_reference_id", user.id);
       
-      // CÓDIGO PROMOCIONAL AUTOMÁTICO (OPÇÃO A)
+      // UX: Preenche o email automaticamente no checkout
+      params.append("prefilled_email", user.email);
+      
+      // MARKETING/TRACKING (A Stripe guarda isto nos metadados da transação)
+      params.append("utm_source", "webapp");      // Origem: Aplicação Web
+      params.append("utm_medium", "modal_pro");   // Meio: Modal de Acesso
+      params.append("utm_campaign", "lifetime_launch"); // Campanha
+      
+      // PROMOÇÕES
       params.append("prefilled_promo_code", "EARLYBIRD"); 
 
       // 3. Redirecionamento

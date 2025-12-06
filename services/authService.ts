@@ -289,9 +289,52 @@ export const AuthService = {
   },
 
   deleteUser: async (userId: string): Promise<void> => {
-    if (!isConfigured) return; 
+    // --- MOCK MODE ---
+    if (!isConfigured) {
+        // Remover da cache local se for o utilizador atual
+        const currentUser = getMockUser();
+        if (currentUser && currentUser.id === userId) {
+            localStorage.removeItem('calcconstrupro_user_cache');
+            localStorage.removeItem('calcconstrupro_mock_session');
+        }
+        
+        // Remover projetos do utilizador do mock storage
+        const mockProjects = JSON.parse(localStorage.getItem('mock_projects') || '[]');
+        const filteredProjects = mockProjects.filter((p: any) => p.user_id !== userId);
+        localStorage.setItem('mock_projects', JSON.stringify(filteredProjects));
+        return; 
+    }
+
+    // --- SUPABASE MODE ---
+    
+    // 1. Apagar Projetos (Dados da Aplicação)
+    // Mesmo que não haja "On Delete Cascade" no SQL, garantimos a limpeza aqui.
+    const { error: projectError } = await supabase
+        .from('projects')
+        .delete()
+        .eq('user_id', userId);
+        
+    if (projectError) {
+         console.warn("Aviso ao apagar projetos (pode ser restrição FK ou RLS):", projectError);
+    }
+
+    // 2. Apagar Ficheiros do Storage (Logótipo da Empresa)
+    try {
+        const { data: files } = await supabase.storage.from('company-logos').list(userId);
+        if (files && files.length > 0) {
+            const filesToRemove = files.map(x => `${userId}/${x.name}`);
+            await supabase.storage.from('company-logos').remove(filesToRemove);
+        }
+    } catch (e) {
+        console.warn("Aviso ao limpar storage:", e);
+    }
+
+    // 3. Apagar o Perfil (Tabela Profiles)
     const { error } = await supabase.from('profiles').delete().eq('id', userId);
     if (error) throw error;
+
+    // Nota: Em clientes JS (Frontend), não é possível apagar diretamente da tabela auth.users por segurança.
+    // Mas ao apagar o perfil e os dados, o utilizador deixa de existir para a aplicação.
   },
 
   activateTrial: async (userId: string): Promise<void> => {
