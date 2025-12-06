@@ -1,227 +1,181 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { UnitSystem, MaterialConfig, User } from '../types';
-import { CONVERSIONS, DEFAULT_MATERIALS, LABELS } from '../constants';
+import React from 'react';
+import { UnitSystem, MaterialConfig } from '../types';
+import { LABELS, CONVERSIONS } from '../constants';
 import { convertValue, formatNumber } from '../utils/math';
-import { Settings, Calculator, Droplets, Box, Layers, Container, Scan, Download, Lock, Crown, ChevronDown, Ruler } from 'lucide-react';
-import { PrintPreviewModal } from './PrintPreviewModal';
+import { Settings, Calculator, Droplets, Box, Layers, Container, Scan, Download, Lock, Crown, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-interface VolumeMaterialsProps {
+// --- DIMENSIONS CARD (Coluna do Meio) ---
+interface DimensionsCardProps {
   unitSystem: UnitSystem;
-  importedAreaM2: number;
-  isPro: boolean;
-  user: User | null;
-  onRequestUpgrade: () => void;
-  projectName?: string;
+  mode: 'box' | 'slab';
+  setMode: (m: 'box' | 'slab') => void;
+  length: string;
+  setLength: (v: string) => void;
+  width: string;
+  setWidth: (v: string) => void;
+  height: string;
+  setHeight: (v: string) => void;
+  volumeM3: number;
+  currentAreaM2: number;
 }
 
-export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, user, onRequestUpgrade, projectName }) => {
+export const DimensionsCard: React.FC<DimensionsCardProps> = ({
+  unitSystem,
+  mode,
+  setMode,
+  length,
+  setLength,
+  width,
+  setWidth,
+  height,
+  setHeight,
+  volumeM3,
+  currentAreaM2
+}) => {
   const { t } = useLanguage();
-  const [mode, setMode] = useState<'box' | 'slab'>('slab');
-  
-  // Initialize with '0' as requested
-  const [length, setLength] = useState<string>('0');
-  const [width, setWidth] = useState<string>('0');
-  const [height, setHeight] = useState<string>('0');
-  
-  const [showSteelDetails, setShowSteelDetails] = useState(true);
-  
-  const [config, setConfig] = useState<MaterialConfig>(DEFAULT_MATERIALS);
-  const [showConfig, setShowConfig] = useState(false);
-  const [volumeM3, setVolumeM3] = useState(0);
-
-  const [showPrintPreview, setShowPrintPreview] = useState(false);
-  
-  // Calculate Volume
-  const calculate = () => {
-    let vol = 0;
-    const l = parseFloat(length) || 0;
-    const w = parseFloat(width) || 0;
-    const h = parseFloat(height) || 0;
-
-    if (mode === 'slab') {
-       // In slab mode, we use imported area * height
-       // importedAreaM2 comes from CanvasArea component
-       vol = importedAreaM2 * h;
-    } else {
-       vol = l * w * h;
-    }
-    setVolumeM3(vol);
-  };
-
-  useEffect(calculate, [length, width, height, importedAreaM2, mode]);
-
-  // Calculate Display Area (for the new UI section)
-  // In Box mode: Area = Length * Width. In Slab mode: Area = Imported Area.
-  const currentAreaM2 = mode === 'slab' ? importedAreaM2 : (parseFloat(length) || 0) * (parseFloat(width) || 0);
-
-  const displayVolume = convertValue(volumeM3, 'volume', unitSystem);
   const units = LABELS[unitSystem];
-
-  const matCementKg = volumeM3 * config.cementKgPerM3;
-  const matSand = volumeM3 * config.sandM3PerM3;
-  const matGravel = volumeM3 * config.gravelM3PerM3;
-  const matWater = volumeM3 * config.waterLPerM3;
-  const matSteelMin = volumeM3 * config.steelKgPerM3Min;
-  const matSteelMax = volumeM3 * config.steelKgPerM3Max;
-  const bags = Math.ceil(matCementKg / 25);
-
-  const steelBreakdown = useMemo(() => {
-      const avgSteel = (matSteelMin + matSteelMax) / 2;
-      
-      if (mode === 'slab') {
-          return {
-              type: t('slabMesh'),
-              parts: [
-                  { name: `${t('mesh')} (Inf/Sup)`, detail: 'Ø10 - Ø12 // 15-20cm', weight: avgSteel * 0.6 },
-                  { name: `${t('dist')} / Cavaletes`, detail: 'Ø8 // 20-25cm', weight: avgSteel * 0.4 }
-              ]
-          };
-      } else {
-          return {
-              type: t('beamPillar'),
-              parts: [
-                  { name: `${t('long')} (Varões)`, detail: '4x - 8x Ø12 - Ø20', weight: avgSteel * 0.7 },
-                  { name: `${t('stirrups')} (Cinta)`, detail: 'Ø6 - Ø8 // 15cm', weight: avgSteel * 0.3 }
-              ]
-          };
-      }
-  }, [mode, matSteelMin, matSteelMax, t]);
-
-  const handlePrintClick = () => {
-    setShowPrintPreview(true);
-  };
+  const displayVolume = convertValue(volumeM3, 'volume', unitSystem);
 
   return (
-    <>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      
-      {/* Input Section */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl ring-1 ring-white/5 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800/60 p-5 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-             <div className="bg-indigo-500/10 p-2.5 rounded-lg border border-indigo-500/20 text-indigo-400">
-               <Calculator size={22} />
-             </div>
-             <div>
-               <h2 className="text-base font-bold text-slate-100 tracking-wide uppercase">{t('dimensions')}</h2>
-               <div className="text-xs text-slate-500 font-medium mt-0.5">{t('defineVolume')}</div>
-             </div>
-          </div>
-          
-          <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-             <button onClick={() => setMode('slab')} type="button" className={`px-4 py-2 text-xs font-bold uppercase tracking-wide rounded-lg transition-all ${mode === 'slab' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>{t('slab')}</button>
-             <button onClick={() => setMode('box')} type="button" className={`px-4 py-2 text-xs font-bold uppercase tracking-wide rounded-lg transition-all ${mode === 'box' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>{t('box')}</button>
-          </div>
+    <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl ring-1 ring-white/5 overflow-hidden flex flex-col h-full">
+      {/* Header */}
+      <div className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800/60 p-5 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+           <div className="bg-indigo-500/10 p-2.5 rounded-lg border border-indigo-500/20 text-indigo-400">
+             <Calculator size={22} />
+           </div>
+           <div>
+             <h2 className="text-base font-bold text-slate-100 tracking-wide uppercase whitespace-nowrap">{t('dimensions')}</h2>
+             <div className="text-xs text-slate-500 font-medium mt-0.5">{t('defineVolume')}</div>
+           </div>
         </div>
-
-        <div className="p-8 space-y-8 flex-1 flex flex-col">
-          
-          {/* Inputs */}
-          {mode === 'slab' ? (
-             // SLAB MODE: Only height input, area comes from canvas
-             <div className="space-y-4">
-                 <div className="p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-xl flex items-center gap-3 animate-in fade-in">
-                    <Scan className="text-indigo-400 shrink-0" size={20}/>
-                    <div className="text-sm text-indigo-200">
-                       A utilizar área desenhada no canvas acima. Ajuste a espessura abaixo.
-                    </div>
-                 </div>
-                 
-                 <div className="group">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
-                      {t('thickness')} ({units.length})
-                    </label>
-                    <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
-                  </div>
-             </div>
-          ) : (
-             // BOX MODE: Length, Width, Height inputs
-             <>
-                <div className="grid grid-cols-2 gap-6 animate-in fade-in">
-                  <div className="group">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('length')} ({units.length})</label>
-                    <div className="relative">
-                      <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
-                    </div>
-                  </div>
-                  <div className="group">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('width')} ({units.length})</label>
-                    <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
-                  </div>
-                </div>
-
-                <div className="group animate-in fade-in">
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
-                    {t('height')} ({units.length})
-                  </label>
-                  <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
-                </div>
-             </>
-          )}
-
-          {/* Footer with Calculations */}
-          <div className="mt-auto pt-8 border-t border-slate-800/60 grid grid-cols-1 md:grid-cols-2 gap-6">
-             
-             {/* VOLUME */}
-             <div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2 whitespace-nowrap">
-                  <Container size={14}/> {t('estimatedVolume')}
-                </div>
-                <div className="text-3xl lg:text-4xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
-                  {formatNumber(displayVolume, 3)} <span className="text-lg text-emerald-600/80 font-sans font-bold">{units.volume}</span>
-                </div>
-             </div>
-
-             {/* AREA */}
-             <div className="relative pl-0 md:pl-6 md:border-l border-slate-800/60">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2 whitespace-nowrap">
-                  <Scan size={14}/> Área Calculada
-                </div>
-                <div className="text-3xl lg:text-4xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
-                  {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-lg text-blue-600/80 font-sans font-bold">{units.area}</span>
-                </div>
-             </div>
-          </div>
-
-          {/* Quick Conversions Section */}
-          <div className="pt-6 border-t border-slate-800/60">
-             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Ruler size={12} /> Conversões Rápidas
-             </h3>
-             <div className="grid grid-cols-2 gap-3">
-                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-500 font-bold">1 m</span>
-                    <span className="text-slate-300">3.28 ft</span>
-                 </div>
-                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-500 font-bold">1 m²</span>
-                    <span className="text-slate-300">10.76 ft²</span>
-                 </div>
-                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-500 font-bold">1 m³</span>
-                    <span className="text-slate-300">35.31 ft³</span>
-                 </div>
-                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-500 font-bold">1 kg</span>
-                    <span className="text-slate-300">2.20 lb</span>
-                 </div>
-             </div>
-          </div>
-
+        
+        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+           <button onClick={() => setMode('slab')} type="button" className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all ${mode === 'slab' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>{t('slab')}</button>
+           <button onClick={() => setMode('box')} type="button" className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all ${mode === 'box' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>{t('box')}</button>
         </div>
       </div>
 
-      {/* Materials Section */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl ring-1 ring-white/5 overflow-hidden flex flex-col">
+      <div className="p-6 space-y-6 flex-1 flex flex-col">
+        {/* Inputs */}
+        {mode === 'slab' ? (
+           <div className="space-y-4">
+               <div className="p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-xl flex items-center gap-3 animate-in fade-in">
+                  <Scan className="text-indigo-400 shrink-0" size={20}/>
+                  <div className="text-xs text-indigo-200 leading-relaxed">
+                     A utilizar área desenhada no canvas. Ajuste a espessura.
+                  </div>
+               </div>
+               
+               <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
+                    {t('thickness')} ({units.length})
+                  </label>
+                  <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
+                </div>
+           </div>
+        ) : (
+           <>
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in">
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('length')} ({units.length})</label>
+                  <div className="relative">
+                    <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
+                  </div>
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('width')} ({units.length})</label>
+                  <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
+                </div>
+              </div>
+
+              <div className="group animate-in fade-in">
+                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
+                  {t('height')} ({units.length})
+                </label>
+                <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
+              </div>
+           </>
+        )}
+
+        {/* Footer with Calculations */}
+        <div className="mt-auto pt-6 border-t border-slate-800/60 space-y-4">
+           
+           {/* VOLUME */}
+           <div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2 whitespace-nowrap">
+                <Container size={14}/> {t('estimatedVolume')}
+              </div>
+              <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
+                {formatNumber(displayVolume, 3)} <span className="text-lg text-emerald-600/80 font-sans font-bold">{units.volume}</span>
+              </div>
+           </div>
+
+           {/* AREA */}
+           <div className="pt-4 border-t border-slate-800/60">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2 whitespace-nowrap">
+                <Scan size={14}/> Área Calculada
+              </div>
+              <div className="text-3xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
+                {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-lg text-blue-600/80 font-sans font-bold">{units.area}</span>
+              </div>
+           </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- MATERIALS CARD (Coluna da Direita) ---
+interface MaterialsCardProps {
+    unitSystem: UnitSystem;
+    config: MaterialConfig;
+    setConfig: (c: MaterialConfig) => void;
+    showConfig: boolean;
+    setShowConfig: (b: boolean) => void;
+    
+    // Calculated Values
+    matCementKg: number;
+    matSand: number;
+    matGravel: number;
+    matWater: number;
+    matSteelMin: number;
+    matSteelMax: number;
+    bags: number;
+    
+    // UI Props
+    isPro: boolean;
+    onRequestUpgrade: () => void;
+    onPrint: () => void;
+    
+    // Steel Details
+    steelBreakdown: any;
+    showSteelDetails: boolean;
+    setShowSteelDetails: (b: boolean) => void;
+}
+
+export const MaterialsCard: React.FC<MaterialsCardProps> = ({
+    unitSystem,
+    config, setConfig,
+    showConfig, setShowConfig,
+    matCementKg, matSand, matGravel, matWater, matSteelMin, matSteelMax, bags,
+    isPro, onRequestUpgrade, onPrint,
+    steelBreakdown, showSteelDetails, setShowSteelDetails
+}) => {
+    const { t } = useLanguage();
+    const units = LABELS[unitSystem];
+
+    return (
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl ring-1 ring-white/5 overflow-hidden flex flex-col h-full">
          <div className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800/60 p-5 flex justify-between items-center">
            <div className="flex items-center gap-4">
              <div className="bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20 text-amber-500">
                <Box size={22} />
              </div>
              <div>
-               <h2 className="text-base font-bold text-slate-100 tracking-wide uppercase">{t('materials')}</h2>
+               <h2 className="text-base font-bold text-slate-100 tracking-wide uppercase whitespace-nowrap">{t('materials')}</h2>
                <div className="text-xs text-slate-500 font-medium mt-0.5">{t('estimateQty')}</div>
              </div>
           </div>
@@ -312,7 +266,7 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
                   <div className="px-5 pb-5 pt-2 pl-7 animate-in slide-in-from-top-1">
                       {isPro ? (
                           <div className="space-y-3 mt-2">
-                              {steelBreakdown.parts.map((part, idx) => (
+                              {steelBreakdown.parts.map((part: any, idx: number) => (
                                 <div key={idx} className="flex justify-between items-center text-sm p-4 bg-slate-950 border border-slate-800 rounded-xl hover:border-red-500/40 transition-colors shadow-sm">
                                     <div>
                                         <div className="text-white font-bold text-sm mb-0.5">{part.name}</div>
@@ -344,7 +298,7 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
         
         <div className="p-6 border-t border-slate-800 bg-slate-900/50">
            <button 
-             onClick={handlePrintClick}
+             onClick={onPrint}
              type="button"
              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-bold border transition-all bg-slate-800 text-white border-slate-700 hover:bg-blue-600 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-900/20 group"
            >
@@ -352,32 +306,6 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
              <span>{t('printPdf')}</span>
            </button>
         </div>
-
       </div>
-    </div>
-    
-    {showPrintPreview && (
-      <PrintPreviewModal 
-        data={{
-            unitSystem,
-            displayVolume,
-            config,
-            matCementKg,
-            matSand,
-            matGravel,
-            matWater,
-            matSteelMin,
-            matSteelMax,
-            bags,
-            steelBreakdown,
-            mode,
-            area: currentAreaM2, // Updated to use the correct area variable
-            projectName: projectName 
-        }}
-        user={user}
-        onClose={() => setShowPrintPreview(false)}
-      />
-    )}
-    </>
-  );
+    );
 };

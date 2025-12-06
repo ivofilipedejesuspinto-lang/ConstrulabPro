@@ -1,8 +1,8 @@
-
-import React, { useState, useEffect } from 'react';
-import { UnitSystem, User, ProjectData, Project } from './types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { UnitSystem, User, ProjectData, Project, MaterialConfig } from './types';
 import { CanvasArea } from './components/CanvasArea';
-import { VolumeMaterials } from './components/VolumeMaterials';
+import { DimensionsCard, MaterialsCard } from './components/VolumeMaterials';
+import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { AdUnit } from './components/AdUnit';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProfileModal } from './components/ProfileModal';
@@ -16,14 +16,26 @@ import { ProjectService } from './services/projectService';
 import { Logo } from './components/Logo';
 import { LanguageSelector } from './components/LanguageSelector';
 import { useLanguage } from './contexts/LanguageContext';
-import { ADSENSE_CONFIG } from './constants';
-import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu, Sparkles, Code } from 'lucide-react';
+import { ADSENSE_CONFIG, DEFAULT_MATERIALS } from './constants';
+import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Menu, Sparkles, Code } from 'lucide-react';
+import { convertValue } from './utils/math';
 
 const App: React.FC = () => {
   const { t } = useLanguage();
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(UnitSystem.SI);
-  const [calculatedAreaM2, setCalculatedAreaM2] = useState<number>(0);
   
+  // --- STATE ---
+  const [calculatedAreaM2, setCalculatedAreaM2] = useState<number>(0); // Sempre em m2
+  const [mode, setMode] = useState<'box' | 'slab'>('slab');
+  const [length, setLength] = useState<string>('0');
+  const [width, setWidth] = useState<string>('0');
+  const [height, setHeight] = useState<string>('0');
+  const [config, setConfig] = useState<MaterialConfig>(DEFAULT_MATERIALS);
+  const [showConfig, setShowConfig] = useState(false);
+  const [showSteelDetails, setShowSteelDetails] = useState(true);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [volumeM3, setVolumeM3] = useState(0);
+
   // User State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isProAccessModalOpen, setIsProAccessModalOpen] = useState(false);
@@ -45,33 +57,90 @@ const App: React.FC = () => {
   // --- NOTIFICATION STATE ---
   const [notification, setNotification] = useState<{ msg: string; type: NotificationType } | null>(null);
 
+  // --- CALCULATIONS LOGIC ---
+  
+  // Converter inputs para Metros (SI) se estiver em Imperial
+  const getValueInMeters = (valStr: string) => {
+      const val = parseFloat(valStr) || 0;
+      if (unitSystem === UnitSystem.IMPERIAL) {
+          return val * 0.3048; // ft to m
+      }
+      return val;
+  };
+
+  const currentAreaM2 = useMemo(() => {
+    if (mode === 'slab') return calculatedAreaM2;
+    // Box Mode: Calcular área baseada nos inputs (convertidos)
+    const l = getValueInMeters(length);
+    const w = getValueInMeters(width);
+    return l * w;
+  }, [mode, calculatedAreaM2, length, width, unitSystem]);
+
+  useEffect(() => {
+    let vol = 0;
+    const h = getValueInMeters(height);
+
+    if (mode === 'slab') {
+       vol = calculatedAreaM2 * h;
+    } else {
+       const l = getValueInMeters(length);
+       const w = getValueInMeters(width);
+       vol = l * w * h;
+    }
+    setVolumeM3(vol);
+  }, [length, width, height, calculatedAreaM2, mode, unitSystem]);
+
+  const matCementKg = volumeM3 * config.cementKgPerM3;
+  const matSand = volumeM3 * config.sandM3PerM3;
+  const matGravel = volumeM3 * config.gravelM3PerM3;
+  const matWater = volumeM3 * config.waterLPerM3;
+  const matSteelMin = volumeM3 * config.steelKgPerM3Min;
+  const matSteelMax = volumeM3 * config.steelKgPerM3Max;
+  const bags = Math.ceil(matCementKg / 25);
+
+  const steelBreakdown = useMemo(() => {
+      const avgSteel = (matSteelMin + matSteelMax) / 2;
+      
+      if (mode === 'slab') {
+          return {
+              type: t('slabMesh'),
+              parts: [
+                  { name: `${t('mesh')} (Inf/Sup)`, detail: 'Ø10 - Ø12 // 15-20cm', weight: avgSteel * 0.6 },
+                  { name: `${t('dist')} / Cavaletes`, detail: 'Ø8 // 20-25cm', weight: avgSteel * 0.4 }
+              ]
+          };
+      } else {
+          return {
+              type: t('beamPillar'),
+              parts: [
+                  { name: `${t('long')} (Varões)`, detail: '4x - 8x Ø12 - Ø20', weight: avgSteel * 0.7 },
+                  { name: `${t('stirrups')} (Cinta)`, detail: 'Ø6 - Ø8 // 15cm', weight: avgSteel * 0.3 }
+              ]
+          };
+      }
+  }, [mode, matSteelMin, matSteelMax, t]);
+
   useEffect(() => {
     const initApp = async () => {
-        // 1. Sincronizar Sessão
         const user = await handleSyncSession();
         trackUsage(user);
 
-        // 2. Verificar Retorno do Stripe (Pagamento Sucesso)
         const params = new URLSearchParams(window.location.search);
         if (params.get('payment') === 'success') {
             if (user) {
                 try {
-                    // Tentar ativar o PRO
                     await AuthService.simulatePaymentSuccess(user.id);
-                    await handleSyncSession(); // Atualizar estado local
+                    await handleSyncSession(); 
                     showNotification("Pagamento confirmado! Acesso VITALÍCIO ativado.", 'success');
                 } catch (e) {
-                    // Fallback se falhar a atualização direta (ex: restrições de base de dados)
                     console.error(e);
                     showNotification("Pagamento recebido! Se o PRO não ativar em instantes, contacte o suporte.", 'success');
                 }
             }
-            // Limpar URL para não processar novamente ao fazer refresh
             window.history.replaceState({}, document.title, window.location.pathname);
             setIsProAccessModalOpen(false);
         }
     };
-
     initApp();
   }, []);
 
@@ -79,12 +148,11 @@ const App: React.FC = () => {
       const isPro = user?.role === 'pro' || user?.role === 'admin';
       
       if (!isPro) {
-          // Rebranded Key
           const visits = Number(localStorage.getItem('calcconstrupro_visits') || 0) + 1;
           localStorage.setItem('calcconstrupro_visits', visits.toString());
           
           if (visits === 3) {
-              setTimeout(() => setIsProAccessModalOpen(true), 2000); // Small delay for effect
+              setTimeout(() => setIsProAccessModalOpen(true), 2000);
           }
       }
   };
@@ -239,7 +307,7 @@ const App: React.FC = () => {
         activePage={activePage}
       />
 
-      {/* Static Pages Rendering */}
+      {/* Static Pages & Modals */}
       {activePage === 'about' && <AboutPage onClose={() => setActivePage(null)} />}
       {activePage === 'faq' && <FaqPage onClose={() => setActivePage(null)} />}
       {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
@@ -263,7 +331,7 @@ const App: React.FC = () => {
       )}
 
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 print:hidden">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-[1500px] mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
                 onClick={() => setIsMenuOpen(true)}
@@ -272,104 +340,54 @@ const App: React.FC = () => {
             >
                 <Menu size={24} />
             </button>
-
-            {/* BRANDING LOGO */}
             <div className="pl-4 border-l border-slate-700">
               <Logo className="h-9" />
             </div>
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">
-            
-            {/* LANGUAGE SELECTOR - ADDED HERE */}
             <LanguageSelector />
-
             <div className="hidden md:flex items-center bg-slate-950 rounded-lg p-1 border border-slate-800">
-              <button 
-                onClick={() => setUnitSystem(UnitSystem.SI)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.SI ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                {t('metric')}
-              </button>
-              <button 
-                onClick={() => setUnitSystem(UnitSystem.IMPERIAL)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.IMPERIAL ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                {t('imperial')}
-              </button>
+              <button onClick={() => setUnitSystem(UnitSystem.SI)} className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.SI ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>{t('metric')}</button>
+              <button onClick={() => setUnitSystem(UnitSystem.IMPERIAL)} className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${unitSystem === UnitSystem.IMPERIAL ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>{t('imperial')}</button>
             </div>
-
             {currentUser ? (
               <div className="flex items-center gap-3">
                  {currentUser.role === 'admin' && (
-                    <button 
-                      onClick={() => setIsAdminPanelOpen(true)} 
-                      className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded-full text-xs font-bold border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]" 
-                      title="Painel Admin"
-                    >
-                      <Shield size={14} /> {t('admin')}
-                    </button>
+                    <button onClick={() => setIsAdminPanelOpen(true)} className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded-full text-xs font-bold border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]" title="Painel Admin"><Shield size={14} /> {t('admin')}</button>
                  )}
                  {isPro ? (
-                    <div className="flex items-center gap-1 bg-slate-800 text-amber-500 px-3 py-1.5 rounded-full text-xs font-bold border border-slate-700 cursor-default">
-                      <Crown size={14} fill="currentColor" />
-                      PRO
-                    </div>
+                    <div className="flex items-center gap-1 bg-slate-800 text-amber-500 px-3 py-1.5 rounded-full text-xs font-bold border border-slate-700 cursor-default"><Crown size={14} fill="currentColor" /> PRO</div>
                  ) : (
-                    <button 
-                      onClick={() => setIsProAccessModalOpen(true)}
-                      className="hidden sm:flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg transition-all"
-                    >
-                      <Crown size={14} /> {t('upgrade')}
-                    </button>
+                    <button onClick={() => setIsProAccessModalOpen(true)} className="hidden sm:flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg transition-all"><Crown size={14} /> {t('upgrade')}</button>
                  )}
                  <div className="flex items-center gap-3 pl-3 border-l border-slate-700">
                     <div className="hidden sm:flex flex-col items-end group relative cursor-pointer" onClick={() => setIsProfileModalOpen(true)}>
-                        <span className="text-sm text-slate-300 font-medium leading-tight flex items-center gap-1 hover:text-blue-400 transition-colors">
-                          {currentUser.name}
-                        </span>
-                        <span className={`text-[10px] uppercase tracking-wider font-bold ${
-                           currentUser.role === 'admin' ? 'text-red-500' : 
-                           currentUser.role === 'pro' ? 'text-amber-500' : 'text-slate-500'
-                        }`}>
-                           {currentUser.role}
-                        </span>
+                        <span className="text-sm text-slate-300 font-medium leading-tight flex items-center gap-1 hover:text-blue-400 transition-colors">{currentUser.name}</span>
+                        <span className={`text-[10px] uppercase tracking-wider font-bold ${currentUser.role === 'admin' ? 'text-red-500' : currentUser.role === 'pro' ? 'text-amber-500' : 'text-slate-500'}`}>{currentUser.role}</span>
                     </div>
-                    
-                    <button 
-                      onClick={handleSyncSession} 
-                      className={`text-slate-500 hover:text-blue-400 transition-colors p-1.5 ${isSyncing ? 'animate-spin' : ''}`} 
-                      title="Atualizar Perfil / Sincronizar"
-                    >
-                      <RefreshCw size={18} />
-                    </button>
-
-                    <button onClick={handleLogout} className="text-slate-500 hover:text-white transition-colors p-1.5" title={t('logout')}>
-                      <LogOut size={18} />
-                    </button>
+                    <button onClick={handleSyncSession} className={`text-slate-500 hover:text-blue-400 transition-colors p-1.5 ${isSyncing ? 'animate-spin' : ''}`} title="Atualizar"><RefreshCw size={18} /></button>
+                    <button onClick={handleLogout} className="text-slate-500 hover:text-white transition-colors p-1.5" title={t('logout')}><LogOut size={18} /></button>
                  </div>
               </div>
             ) : (
-              <button 
-                onClick={() => setIsProAccessModalOpen(true)}
-                className="flex items-center gap-2 bg-slate-800 hover:bg-blue-600 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-900/20 text-white px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 transition-all"
-              >
-                <LogIn size={16} /> {t('login')}
-              </button>
+              <button onClick={() => setIsProAccessModalOpen(true)} className="flex items-center gap-2 bg-slate-800 hover:bg-blue-600 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-900/20 text-white px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 transition-all"><LogIn size={16} /> {t('login')}</button>
             )}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-8 flex flex-col gap-8 print:block print:p-0 print:max-w-none">
+      <main className="flex-1 max-w-[1500px] mx-auto w-full p-6 md:p-8 flex flex-col gap-8 print:block print:p-0 print:max-w-none">
         
         <div className="flex flex-col gap-8 print:hidden">
             <AdUnit id={ADSENSE_CONFIG.SLOTS.HEADER} slotType="header" isPro={isPro} />
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+        {/* FINAL 3-COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           
-          <div className="flex flex-col gap-8 print:block">
+          {/* COLUMN 1: Canvas (Left) */}
+          <div className="xl:col-span-1 flex flex-col gap-6">
             <CanvasArea 
               unitSystem={unitSystem} 
               onAreaCalculated={setCalculatedAreaM2} 
@@ -384,22 +402,52 @@ const App: React.FC = () => {
             <div className="print:hidden">
               <AdUnit id={ADSENSE_CONFIG.SLOTS.INLINE} slotType="inline" isPro={isPro} />
             </div>
+          </div>
 
-            <VolumeMaterials 
-              unitSystem={unitSystem} 
-              importedAreaM2={calculatedAreaM2}
-              isPro={isPro}
-              user={currentUser}
-              onRequestUpgrade={() => setIsProAccessModalOpen(true)}
-              projectName={currentProjectName}
+          {/* COLUMN 2: Dimensions (Middle) */}
+          <div className="xl:col-span-1 flex flex-col h-full">
+            <DimensionsCard 
+                unitSystem={unitSystem}
+                mode={mode}
+                setMode={setMode}
+                length={length}
+                setLength={setLength}
+                width={width}
+                setWidth={setWidth}
+                height={height}
+                setHeight={setHeight}
+                volumeM3={volumeM3}
+                currentAreaM2={currentAreaM2}
             />
           </div>
 
-          <aside className="hidden lg:flex flex-col gap-6 print:hidden h-full">
-             <AdUnit id={ADSENSE_CONFIG.SLOTS.SIDEBAR} slotType="sidebar" isPro={isPro} />
+          {/* COLUMN 3: Materials & Ad (Right) */}
+          <div className="xl:col-span-1 flex flex-col gap-6 h-full">
+             <MaterialsCard 
+                unitSystem={unitSystem}
+                config={config}
+                setConfig={setConfig}
+                showConfig={showConfig}
+                setShowConfig={setShowConfig}
+                matCementKg={matCementKg}
+                matSand={matSand}
+                matGravel={matGravel}
+                matWater={matWater}
+                matSteelMin={matSteelMin}
+                matSteelMax={matSteelMax}
+                bags={bags}
+                isPro={isPro}
+                onRequestUpgrade={() => setIsProAccessModalOpen(true)}
+                onPrint={() => setShowPrintPreview(true)}
+                steelBreakdown={steelBreakdown}
+                showSteelDetails={showSteelDetails}
+                setShowSteelDetails={setShowSteelDetails}
+             />
              
-             {/* SIDEBAR CALCULATOR REMOVED FROM HERE */}
-          </aside>
+             <div className="hidden xl:block">
+                 <AdUnit id={ADSENSE_CONFIG.SLOTS.SIDEBAR} slotType="sidebar" isPro={isPro} className="!w-full !h-auto min-h-[300px]" />
+             </div>
+          </div>
 
         </div>
 
@@ -412,6 +460,7 @@ const App: React.FC = () => {
 
       </main>
 
+      {/* Footer & Modals */}
       <footer className="border-t border-slate-800 mt-16 py-10 bg-slate-950 print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-slate-500 text-base flex items-center justify-center gap-2 mb-4">
@@ -449,6 +498,29 @@ const App: React.FC = () => {
           user={currentUser}
           onUserUpdate={(updatedUser) => setCurrentUser(updatedUser)}
         />
+      )}
+
+      {showPrintPreview && (
+          <PrintPreviewModal 
+            data={{
+                unitSystem,
+                displayVolume: convertValue(volumeM3, 'volume', unitSystem),
+                config,
+                matCementKg,
+                matSand,
+                matGravel,
+                matWater,
+                matSteelMin,
+                matSteelMax,
+                bags,
+                steelBreakdown,
+                mode,
+                area: currentAreaM2,
+                projectName: currentProjectName 
+            }}
+            user={currentUser}
+            onClose={() => setShowPrintPreview(false)}
+          />
       )}
 
       {isLoadModalOpen && (
