@@ -13,9 +13,10 @@ interface VolumeMaterialsProps {
   isPro: boolean;
   user: User | null;
   onRequestUpgrade: () => void;
+  projectName?: string;
 }
 
-export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, user, onRequestUpgrade }) => {
+export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, user, onRequestUpgrade, projectName }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'box' | 'slab'>('slab');
   const [length, setLength] = useState<string>('10');
@@ -85,6 +86,9 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
   const handlePrintClick = () => {
     setShowPrintPreview(true);
   };
+
+  // Calculate current area for print
+  const currentArea = mode === 'slab' ? importedAreaM2 : (parseFloat(length) || 0) * (parseFloat(width) || 0);
 
   return (
     <>
@@ -309,9 +313,11 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
             matSteelMax,
             bags,
             steelBreakdown,
-            mode
+            mode,
+            area: currentArea,
+            projectName: projectName // Pass project name
         }}
-        user={user} // Passed user here
+        user={user}
         onClose={() => setShowPrintPreview(false)}
       />
     )}

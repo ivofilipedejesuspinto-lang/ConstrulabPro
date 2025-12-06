@@ -28,7 +28,6 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
   const [authError, setAuthError] = useState('');
 
   // Payment/Trial State
-  const [paymentLoading, setPaymentLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -73,35 +72,6 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
     } finally {
       setAuthLoading(false);
     }
-  };
-
-  // --- PAYMENT HANDLER (LIFETIME) ---
-  const handleSubscribe = async () => {
-      if (!user) {
-          setAuthError("Por favor, crie conta ou inicie sessão primeiro (lado esquerdo).");
-          return;
-      }
-      
-      setPaymentLoading(true);
-      try {
-          // TENTATIVA DE USAR O STRIPE REAL (Futuro)
-          try {
-             // await AuthService.startStripeCheckout('price_12345_ID_DO_STRIPE');
-             // return; // Se funcionar, o utilizador é redirecionado
-             throw new Error("Stripe not configured"); // Fallback imediato para simulação
-          } catch (stripeError) {
-             // FALLBACK: Simulação (apenas para Demo/Teste)
-             // Em produção, deve remover este bloco e forçar o Stripe
-             console.log("Stripe indisponível, usando simulação.");
-             await AuthService.simulatePaymentSuccess(user.id);
-             onPaymentSuccess();
-             onClose();
-          }
-      } catch (e) {
-          alert("Erro no pagamento.");
-      } finally {
-          setPaymentLoading(false);
-      }
   };
 
   // --- TRIAL HANDLER ---
@@ -276,7 +246,7 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                     </div>
                     {/* Early Bird Badge */}
                     <div className="bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg border border-white/10 animate-pulse">
-                        Early Bird: Primeiros 100
+                        POUPE 20%
                     </div>
                 </div>
 
@@ -297,8 +267,8 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                         <span className="text-slate-300 text-sm">Guardar projetos ilimitados na nuvem</span>
                     </li>
                     <li className="flex items-center gap-3">
-                        <div className="bg-emerald-500/20 p-1 rounded-full"><Building2 size={12} className="text-emerald-400" strokeWidth={3}/></div>
-                        <span className="text-slate-100 font-bold text-sm bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Novo: Personalização de Marca (Logo e Nome)</span>
+                        <div className="bg-emerald-500/20 p-1 rounded-full"><Check size={12} className="text-emerald-400" strokeWidth={3}/></div>
+                        <span className="text-slate-300 text-sm">Personalização de Marca (Logo e Nome)</span>
                     </li>
                     <li className="flex items-center gap-3">
                         <div className="bg-emerald-500/20 p-1 rounded-full"><Check size={12} className="text-emerald-400" strokeWidth={3}/></div>
@@ -310,24 +280,37 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                     </li>
                 </ul>
 
-                <div className="space-y-3">
-                    <button 
-                        onClick={handleSubscribe}
-                        disabled={paymentLoading || isProActive}
-                        className={`w-full py-3.5 rounded-xl text-lg font-bold transition-all transform hover:-translate-y-1 shadow-xl flex items-center justify-center gap-2 ${
-                            isProActive
-                            ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 cursor-default'
-                            : 'bg-gradient-to-r from-amber-500 to-amber-700 text-white hover:shadow-amber-500/25 ring-2 ring-white/10'
-                        }`}
-                    >
-                        {paymentLoading ? <Loader2 className="animate-spin"/> : (isProActive ? <><Check/> Plano Ativo</> : <><Sparkles fill="currentColor" size={20}/> Comprar Agora (Vitalício)</>)}
-                    </button>
+                <div className="space-y-4">
+                    {/* STRIPE BUTTON INTEGRATION */}
+                    {!isProActive ? (
+                        <div className="w-full">
+                            {user ? (
+                                // @ts-ignore
+                                <stripe-buy-button
+                                  buy-button-id="buy_btn_1Sb7BQBlnpClJ5RnVXqoGuEA"
+                                  publishable-key="pk_live_51SaySiBlnpClJ5RnScxFmO8sktLkCAKYVfXHPCtpqktwNUxsCdMhNS6ihZzwNCuyLw00TEaZGOYLqRUVNnkSLXeX00eYoJ2h7Q"
+                                  client-reference-id={user.id}
+                                  customer-email={user.email}
+                                >
+                                </stripe-buy-button>
+                            ) : (
+                                <div className="text-center p-3 border border-dashed border-slate-700 rounded-xl bg-slate-900/50 text-slate-400 text-sm mb-2">
+                                    <Lock size={16} className="inline mr-2 mb-0.5"/>
+                                    Crie conta para desbloquear o pagamento
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                         <div className="w-full py-3.5 rounded-xl text-lg font-bold bg-emerald-600/20 text-emerald-500 border border-emerald-600/30 flex items-center justify-center gap-2 cursor-default">
+                             <Check size={24}/> Plano Vitalício Ativo
+                         </div>
+                    )}
 
                     {!isProActive && (
                         <button 
                             onClick={handleStartTrial}
-                            disabled={trialLoading}
-                            className="w-full py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-all flex items-center justify-center gap-2"
+                            disabled={trialLoading || !user}
+                            className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${!user ? 'opacity-50 cursor-not-allowed text-slate-600' : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700'}`}
                         >
                              {trialLoading ? <Loader2 className="animate-spin" size={16}/> : <><Clock size={16}/> Testar Grátis por 7 Dias</>}
                         </button>

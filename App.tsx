@@ -350,6 +350,7 @@ const App: React.FC = () => {
               isPro={isPro}
               user={currentUser}
               onRequestUpgrade={() => setIsProAccessModalOpen(true)}
+              projectName={currentProjectName}
             />
           </div>
 
@@ -376,9 +377,9 @@ const App: React.FC = () => {
 
         </div>
 
-        <div className="p-6 border border-yellow-900/50 bg-yellow-900/10 rounded-xl flex gap-4 print:hidden">
+        <div className="p-6 border border-yellow-900/50 bg-yellow-900/10 rounded-xl flex items-center justify-center gap-4 print:hidden">
              <Info className="text-yellow-600 flex-shrink-0" size={28} />
-             <div className="text-base text-yellow-500/80 leading-relaxed">
+             <div className="text-base text-yellow-500/80 leading-relaxed text-center">
                <strong>{t('disclaimerTitle')}</strong> {t('disclaimerText')}
              </div>
         </div>

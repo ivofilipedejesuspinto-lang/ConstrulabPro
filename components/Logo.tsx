@@ -15,8 +15,20 @@ export const Logo: React.FC<LogoProps> = ({
   
   // Color configuration based on variant
   const primaryColor = variant === 'white' ? '#ffffff' : '#2563eb'; // blue-600
-  const secondaryColor = variant === 'white' ? '#94a3b8' : (variant === 'dark' ? '#1e293b' : '#3b82f6'); // slate-400 or blue-500
-  const textColor = variant === 'white' ? 'text-white' : 'text-white'; // Always white text in dark mode app, changeable via parent class if needed
+  const secondaryColor = variant === 'white' ? '#94a3b8' : (variant === 'dark' ? '#1e293b' : '#3b82f6'); // slate-400 or blue-500 or slate-900
+  
+  // TEXT COLOR LOGIC
+  // Reverted to white as requested for better legibility
+  let textColorClass = 'text-white';
+
+  if (variant === 'dark') {
+      textColorClass = 'text-slate-900';
+  } else if (variant === 'white') {
+      textColorClass = 'text-white';
+  } else {
+      // App Mode - Default
+      textColorClass = 'text-white';
+  }
 
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
@@ -60,10 +72,10 @@ export const Logo: React.FC<LogoProps> = ({
       {/* WORD MARK (TEXT) */}
       {showText && (
         <div className="flex flex-col justify-center">
-          <h1 className={`font-black tracking-tight leading-none ${textColor} text-[1.4em]`}>
+          <h1 className={`font-black tracking-tight leading-none ${textColorClass} text-[1.4em]`}>
             CalcConstru<span className={`${variant === 'white' ? 'text-blue-300' : 'text-blue-500'}`}>PRO</span>
           </h1>
-          <div className={`text-[0.4em] font-bold tracking-[0.2em] uppercase opacity-60 ${textColor} mt-[0.1em]`}>
+          <div className={`text-[0.4em] font-bold tracking-[0.2em] uppercase opacity-60 ${textColorClass} mt-[0.1em]`}>
             Engenharia Civil
           </div>
         </div>

@@ -219,6 +219,47 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     return lines;
   };
 
+  // Helper function to render dynamic label
+  const renderDynamicLabel = () => {
+    if (isClosed || points.length === 0) return null;
+    
+    const p1 = points[points.length - 1];
+    const p2 = mousePos;
+    
+    const distPx = getDistance(p1, p2);
+    // Don't show label if distance is very small to avoid flickering/clutter near cursor start
+    if (distPx < 5) return null;
+
+    const distM = distPx / scale;
+    const displayDist = convertValue(distM, 'length', unitSystem);
+    const unitLabel = LABELS[unitSystem].length;
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2;
+
+    return (
+        <g>
+            <rect 
+                x={midX - 26} y={midY - 13} 
+                width="52" height="26" 
+                rx="6" fill="#0f172a" 
+                stroke="#1e293b"
+                strokeWidth="1"
+                opacity="0.9"
+            />
+            <text 
+                x={midX} y={midY + 5} 
+                textAnchor="middle" 
+                fill="#e2e8f0" 
+                fontSize="12"
+                fontWeight="500"
+                className="pointer-events-none select-none font-mono"
+            >
+                {formatNumber(displayDist, 1)}<tspan fontSize="10" fill="#94a3b8">{unitLabel}</tspan>
+            </text>
+        </g>
+    );
+  };
+
   return (
     <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden ring-1 ring-white/5 transition-all hover:border-slate-700/50 print:bg-white print:border-none print:shadow-none print:ring-0">
         
@@ -355,6 +396,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                     strokeWidth="1.5"
                     strokeDasharray="4,4"
                 />
+                {renderDynamicLabel()}
                 </g>
             )}
             {points.map((p, i) => (
