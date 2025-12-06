@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { UnitSystem, MaterialConfig, User } from '../types';
 import { CONVERSIONS, DEFAULT_MATERIALS, LABELS } from '../constants';
@@ -170,8 +169,8 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Container size={14}/> {t('estimatedVolume')}
                 </div>
-                <div className="text-4xl xl:text-5xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
-                  {formatNumber(displayVolume, 3)} <span className="text-xl text-emerald-600/80 font-sans font-bold">{units.volume}</span>
+                <div className="text-3xl lg:text-4xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
+                  {formatNumber(displayVolume, 3)} <span className="text-lg text-emerald-600/80 font-sans font-bold">{units.volume}</span>
                 </div>
              </div>
 
@@ -180,8 +179,8 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Scan size={14}/> Área Calculada
                 </div>
-                <div className="text-4xl xl:text-5xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
-                  {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-xl text-blue-600/80 font-sans font-bold">{units.area}</span>
+                <div className="text-3xl lg:text-4xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
+                  {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-lg text-blue-600/80 font-sans font-bold">{units.area}</span>
                 </div>
              </div>
 
