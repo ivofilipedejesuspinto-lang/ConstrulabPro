@@ -1,17 +1,19 @@
-
 import { MaterialConfig, UnitSystem } from './types';
 
 // --- CONFIGURAÇÃO ADSENSE ---
-// Substitua estes valores pelos dados da sua conta Google AdSense
 export const ADSENSE_CONFIG = {
-  // O seu ID de publicador (encontra-se na URL do AdSense ou nas definições de conta)
-  PUBLISHER_ID: 'ca-pub-XXXXXXXXXXXXXXXX', 
+  // O seu ID de publicador (Já configurado corretamente)
+  PUBLISHER_ID: 'ca-pub-5107633859541150', 
   
-  // IDs dos blocos de anúncios criados no painel do AdSense
+  // --- PASSO FINAL ---
+  // Para os anúncios específicos (Topo, Lateral, Meio) aparecerem:
+  // 1. Vá a AdSense > Anúncios > Por bloco de anúncios
+  // 2. Crie 3 blocos de "Display" (Visualização)
+  // 3. Substitua os zeros abaixo pelos IDs que o AdSense lhe der (ex: "1234567890")
   SLOTS: {
-    HEADER: '0000000001',  // Bloco Horizontal (Topo)
-    INLINE: '0000000002',  // Bloco Horizontal (Meio do conteúdo)
-    SIDEBAR: '0000000003', // Bloco Vertical/Quadrado (Barra lateral)
+    HEADER: '0000000001',  // Crie um bloco 'Horizontal' para o topo
+    INLINE: '0000000002',  // Crie um bloco 'Horizontal' para meio do conteúdo
+    SIDEBAR: '0000000003', // Crie um bloco 'Quadrado' ou 'Vertical' para a barra lateral
   }
 };
 

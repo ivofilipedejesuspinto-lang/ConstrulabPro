@@ -16,7 +16,7 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
     // 1. If Pro, do nothing
     if (isPro) return;
 
-    // 2. If IDs are still placeholders, do nothing (prevents console errors)
+    // 2. If IDs are still placeholders, do nothing (prevents console errors from AdSense)
     if (ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX') || id.includes('0000')) {
         return;
     }
@@ -53,8 +53,8 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
     return null;
   }
 
-  // Visual placeholder for Development or when IDs are missing
-  const showPlaceholder = process.env.NODE_ENV === 'development' || ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX');
+  // Visual placeholder for Development OR if IDs are still dummy/test values ('0000...')
+  const showPlaceholder = process.env.NODE_ENV === 'development' || ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX') || id.includes('0000');
 
   const getSizeClasses = () => {
     switch(slotType) {
@@ -69,12 +69,17 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
       
       {showPlaceholder ? (
         // Placeholder for Development/Setup
-        <div className="text-slate-600 text-xs font-mono uppercase tracking-widest text-center p-4">
-          <span className="block opacity-50 mb-1">Publicidade (Google AdSense)</span>
-          <span className="text-[10px] opacity-30 block">Slot ID: {id}</span>
-          {ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX') && (
-             <span className="block text-[9px] mt-2 text-amber-500 font-bold">⚠️ Configure o PUBLISHER_ID em constants.ts</span>
+        <div className="text-slate-600 text-xs font-mono uppercase tracking-widest text-center p-4 w-full h-full flex flex-col items-center justify-center bg-slate-900/50 border-2 border-dashed border-slate-700">
+          <span className="block opacity-70 mb-2 font-bold text-slate-400">Publicidade</span>
+          <span className="text-[10px] opacity-50 block mb-1">Local reservado para o Google AdSense</span>
+          <span className="text-[9px] opacity-30 block font-mono">Slot ID: {id}</span>
+          
+          {id.includes('0000') && (
+             <span className="block text-[9px] mt-2 text-amber-500 font-bold bg-amber-900/20 px-2 py-1 rounded">
+               ⚠️ Falta configurar o Slot ID real no constants.ts
+             </span>
           )}
+          
           <span className="block text-[9px] mt-2 text-blue-500">Oculto na versão PRO</span>
         </div>
       ) : (
