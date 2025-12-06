@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Mail, Globe, MapPin, ChevronRight, HelpCircle, Book, Shield, FileText, Building2, Send, Loader2, CheckCircle } from 'lucide-react';
+import { X, Mail, Globe, MapPin, ChevronRight, HelpCircle, Book, Shield, FileText, Building2, Send, Loader2, CheckCircle, Map, DollarSign, Layout, PaintBucket, Image as ImageIcon, FileSpreadsheet } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface PageProps {
   onClose: () => void;
@@ -33,6 +34,99 @@ const PageLayout: React.FC<{ title: string; icon: React.ReactNode; onClose: () =
     </div>
   </div>
 );
+
+export const RoadmapPage: React.FC<PageProps> = ({ onClose }) => {
+  const { t } = useLanguage();
+
+  const steps = [
+    {
+        title: t('featBudget'),
+        desc: t('featBudgetDesc'),
+        icon: <DollarSign size={20} />,
+        status: 'dev', // dev, planned, future
+        statusText: t('statusDev')
+    },
+    {
+        title: t('featShapes'),
+        desc: t('featShapesDesc'),
+        icon: <Layout size={20} />,
+        status: 'planned',
+        statusText: t('statusPlanned')
+    },
+    {
+        title: t('featModules'),
+        desc: t('featModulesDesc'),
+        icon: <PaintBucket size={20} />,
+        status: 'planned',
+        statusText: t('statusPlanned')
+    },
+    {
+        title: t('featDigitize'),
+        desc: t('featDigitizeDesc'),
+        icon: <ImageIcon size={20} />,
+        status: 'future',
+        statusText: t('statusFuture')
+    },
+    {
+        title: t('featExport'),
+        desc: t('featExportDesc'),
+        icon: <FileSpreadsheet size={20} />,
+        status: 'future',
+        statusText: t('statusFuture')
+    }
+  ];
+
+  return (
+    <PageLayout title={t('roadmap')} icon={<Map size={24}/>} onClose={onClose}>
+        <p className="lead text-lg text-slate-300 mb-12">
+            {t('roadmapDesc')}
+        </p>
+
+        <div className="relative border-l border-slate-800 ml-4 space-y-12 pb-12">
+            {steps.map((step, idx) => (
+                <div key={idx} className="relative pl-8 md:pl-12 group">
+                    {/* Dot Indicator */}
+                    <div className={`absolute -left-[9px] top-1 w-[17px] h-[17px] rounded-full border-4 border-slate-950 transition-colors ${
+                        step.status === 'dev' ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 
+                        step.status === 'planned' ? 'bg-blue-500' : 'bg-slate-700'
+                    }`}></div>
+
+                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:bg-slate-900 hover:border-slate-700 transition-all">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-3 m-0">
+                                <div className={`p-2 rounded-lg ${
+                                    step.status === 'dev' ? 'bg-amber-500/10 text-amber-500' : 
+                                    step.status === 'planned' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-800 text-slate-500'
+                                }`}>
+                                    {step.icon}
+                                </div>
+                                {step.title}
+                            </h3>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit ${
+                                step.status === 'dev' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                                step.status === 'planned' ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                            }`}>
+                                {step.statusText}
+                            </span>
+                        </div>
+                        <p className="text-slate-400 text-sm leading-relaxed m-0">
+                            {step.desc}
+                        </p>
+                    </div>
+                </div>
+            ))}
+        </div>
+        
+        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 text-center mt-8">
+            <h4 className="text-white font-bold mb-2">Tem uma sugestão?</h4>
+            <p className="text-sm text-slate-400 mb-4">A sua ideia pode ser a próxima funcionalidade.</p>
+            <button className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg border border-slate-700 text-sm transition-colors">
+                Enviar Sugestão
+            </button>
+        </div>
+    </PageLayout>
+  );
+};
 
 export const AboutPage: React.FC<PageProps> = ({ onClose }) => (
   <PageLayout title="Sobre o CalcConstruPRO" icon={<Book size={24}/>} onClose={onClose}>

@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle, Crown } from 'lucide-react';
+import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle, Crown, Map } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface NavigationMenuProps {
@@ -34,6 +34,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
     // Área de Cliente adicionada aqui
     { id: 'client-area', label: 'Área de Cliente', icon: <UserCircle size={20}/> },
     { type: 'divider' },
+    { id: 'roadmap', label: 'Roadmap & Futuro', icon: <Map size={20}/> }, // ROADMAP ADICIONADO AQUI
     { id: 'about', label: 'Sobre Nós', icon: <Info size={20}/> },
     { id: 'faq', label: 'Manual & FAQ', icon: <HelpCircle size={20}/> },
     { id: 'contact', label: 'Contactos', icon: <Mail size={20}/> },
@@ -101,6 +102,13 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
                              <div className="ml-auto flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.1)] group-hover:bg-amber-500 group-hover:text-white transition-colors">
                                 <Crown size={10} fill="currentColor" />
                                 PRO
+                             </div>
+                        )}
+                        
+                        {/* Roadmap Highlight */}
+                        {item.id === 'roadmap' && (
+                             <div className="ml-auto flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                                NEW
                              </div>
                         )}
                     </button>

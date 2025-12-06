@@ -9,7 +9,7 @@ import { ProfileModal } from './components/ProfileModal';
 import { NotificationBanner, NotificationType } from './components/NotificationBanner';
 import { SideCalculator } from './components/SideCalculator';
 import { NavigationMenu } from './components/NavigationMenu';
-import { AboutPage, ContactPage, FaqPage, PrivacyPage, TermsPage } from './components/StaticPages';
+import { AboutPage, ContactPage, FaqPage, PrivacyPage, TermsPage, RoadmapPage } from './components/StaticPages';
 import { ProAccessModal } from './components/ProAccessModal';
 import { AuthService } from './services/authService';
 import { ProjectService } from './services/projectService';
@@ -238,11 +238,13 @@ const App: React.FC = () => {
         activePage={activePage}
       />
 
+      {/* Static Pages Rendering */}
       {activePage === 'about' && <AboutPage onClose={() => setActivePage(null)} />}
       {activePage === 'faq' && <FaqPage onClose={() => setActivePage(null)} />}
       {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
       {activePage === 'terms' && <TermsPage onClose={() => setActivePage(null)} />}
       {activePage === 'privacy' && <PrivacyPage onClose={() => setActivePage(null)} />}
+      {activePage === 'roadmap' && <RoadmapPage onClose={() => setActivePage(null)} />}
 
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
