@@ -16,6 +16,7 @@ import { ProjectService } from './services/projectService';
 import { Logo } from './components/Logo';
 import { LanguageSelector } from './components/LanguageSelector';
 import { useLanguage } from './contexts/LanguageContext';
+import { ADSENSE_CONFIG } from './constants';
 import { Crown, X, LogIn, LogOut, Shield, RefreshCw, Cloud, FolderOpen, Loader2, Clock, Trash2, Info, Ruler, Menu, Sparkles, Code } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -348,7 +349,7 @@ const App: React.FC = () => {
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-8 flex flex-col gap-8 print:block print:p-0 print:max-w-none">
         
         <div className="flex flex-col gap-8 print:hidden">
-            <AdUnit id="ad-top" slotType="header" isPro={isPro} />
+            <AdUnit id={ADSENSE_CONFIG.SLOTS.HEADER} slotType="header" isPro={isPro} />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
@@ -366,7 +367,7 @@ const App: React.FC = () => {
             />
             
             <div className="print:hidden">
-              <AdUnit id="ad-inline" slotType="inline" isPro={isPro} />
+              <AdUnit id={ADSENSE_CONFIG.SLOTS.INLINE} slotType="inline" isPro={isPro} />
             </div>
 
             <VolumeMaterials 
@@ -380,7 +381,7 @@ const App: React.FC = () => {
           </div>
 
           <aside className="hidden lg:flex flex-col gap-6 print:hidden h-full">
-             <AdUnit id="ad-sidebar" slotType="sidebar" isPro={isPro} />
+             <AdUnit id={ADSENSE_CONFIG.SLOTS.SIDEBAR} slotType="sidebar" isPro={isPro} />
              
              <div className="sticky top-24 flex flex-col gap-6">
                 

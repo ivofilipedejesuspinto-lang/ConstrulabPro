@@ -1,5 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
+import { ADSENSE_CONFIG } from '../constants';
 
 interface AdUnitProps {
   id: string; // Used as the slot ID in AdSense
@@ -12,8 +13,13 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
   const adRef = useRef<HTMLModElement>(null);
 
   useEffect(() => {
-    // If Pro, do nothing
+    // 1. If Pro, do nothing
     if (isPro) return;
+
+    // 2. If IDs are still placeholders, do nothing (prevents console errors)
+    if (ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX') || id.includes('0000')) {
+        return;
+    }
 
     const pushAd = () => {
         try {
@@ -24,7 +30,6 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
                  // CRITICAL FIX: Check if element is visible or has dimensions.
                  // AdSense throws "No slot size for availableWidth=0" if we push to a 0-width element.
                  if (adElement.offsetParent === null || adElement.offsetWidth === 0 || adElement.offsetHeight === 0) {
-                     // console.debug(`AdSense: Slot ${id} hidden/zero-size, skipping push.`);
                      return; 
                  }
 
@@ -32,7 +37,6 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
                  ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
             }
         } catch (e) {
-            // Ignore errors that happen during the push itself to not crash the app
             console.warn("AdSense push warning:", e);
         }
     };
@@ -49,6 +53,9 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
     return null;
   }
 
+  // Visual placeholder for Development or when IDs are missing
+  const showPlaceholder = process.env.NODE_ENV === 'development' || ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX');
+
   const getSizeClasses = () => {
     switch(slotType) {
       case 'header': return 'w-full h-[90px] max-w-[728px]';
@@ -59,16 +66,15 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
 
   return (
     <div className={`ad-container bg-slate-800/20 border border-slate-800/50 rounded-lg flex flex-col items-center justify-center overflow-hidden my-4 mx-auto ${getSizeClasses()} ${className}`}>
-      {/* 
-        Google AdSense Code Structure. 
-        In production, replace data-ad-client with your ID (ca-pub-...) 
-        and data-ad-slot with the prop 'id' or a map of IDs.
-      */}
-      {process.env.NODE_ENV === 'development' ? (
-        // Placeholder for Development
+      
+      {showPlaceholder ? (
+        // Placeholder for Development/Setup
         <div className="text-slate-600 text-xs font-mono uppercase tracking-widest text-center p-4">
           <span className="block opacity-50 mb-1">Publicidade (Google AdSense)</span>
-          <span className="text-[10px] opacity-30">Slot: {id}</span>
+          <span className="text-[10px] opacity-30 block">Slot ID: {id}</span>
+          {ADSENSE_CONFIG.PUBLISHER_ID.includes('XXX') && (
+             <span className="block text-[9px] mt-2 text-amber-500 font-bold">⚠️ Configure o PUBLISHER_ID em constants.ts</span>
+          )}
           <span className="block text-[9px] mt-2 text-blue-500">Oculto na versão PRO</span>
         </div>
       ) : (
@@ -77,8 +83,8 @@ export const AdUnit: React.FC<AdUnitProps> = ({ id, slotType, className = '', is
           ref={adRef}
           className="adsbygoogle"
           style={{ display: 'block', width: '100%', height: '100%' }}
-          data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // Replace with your ID
-          data-ad-slot={id} // Ensure this matches your AdSense setup
+          data-ad-client={ADSENSE_CONFIG.PUBLISHER_ID}
+          data-ad-slot={id}
           data-ad-format={slotType === 'sidebar' ? 'auto' : 'horizontal'}
           data-full-width-responsive="true"
         ></ins>
