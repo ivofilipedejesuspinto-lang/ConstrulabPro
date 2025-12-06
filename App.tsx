@@ -45,10 +45,33 @@ const App: React.FC = () => {
   const [notification, setNotification] = useState<{ msg: string; type: NotificationType } | null>(null);
 
   useEffect(() => {
-    // Check for existing session in Supabase on load
-    handleSyncSession().then((user) => {
+    const initApp = async () => {
+        // 1. Sincronizar Sessão
+        const user = await handleSyncSession();
         trackUsage(user);
-    });
+
+        // 2. Verificar Retorno do Stripe (Pagamento Sucesso)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('payment') === 'success') {
+            if (user) {
+                try {
+                    // Tentar ativar o PRO
+                    await AuthService.simulatePaymentSuccess(user.id);
+                    await handleSyncSession(); // Atualizar estado local
+                    showNotification("Pagamento confirmado! Acesso VITALÍCIO ativado.", 'success');
+                } catch (e) {
+                    // Fallback se falhar a atualização direta (ex: restrições de base de dados)
+                    console.error(e);
+                    showNotification("Pagamento recebido! Se o PRO não ativar em instantes, contacte o suporte.", 'success');
+                }
+            }
+            // Limpar URL para não processar novamente ao fazer refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setIsProAccessModalOpen(false);
+        }
+    };
+
+    initApp();
   }, []);
 
   const trackUsage = (user: User | null) => {

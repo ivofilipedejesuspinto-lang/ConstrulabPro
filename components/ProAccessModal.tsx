@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { AuthService } from '../services/authService';
-import { X, LogIn, UserPlus, Loader2, Lock, AlertCircle, Crown, Check, Shield, Star, Sparkles, Clock, Building2 } from 'lucide-react';
+import { X, LogIn, UserPlus, Loader2, Lock, AlertCircle, Crown, Check, Shield, Clock, CreditCard, Sparkles, ExternalLink } from 'lucide-react';
 
 interface ProAccessModalProps {
   isOpen: boolean;
@@ -29,6 +29,7 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
 
   // Payment/Trial State
   const [trialLoading, setTrialLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -54,14 +55,11 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       
       onLoginSuccess(loggedUser);
       
-      // CRITICAL UPDATE: Redirect logic
-      // Se for PRO ou ADMIN, fecha a modal imediatamente para ir para a App.
+      // Se for PRO ou ADMIN, fecha a modal imediatamente
       if (loggedUser.role === 'pro' || loggedUser.role === 'admin') {
           onClose();
           return;
       }
-
-      // Se for Free, mantemos aberto para tentar vender o Upgrade (User Experience de conversão)
       
     } catch (err: any) {
       console.error("Auth Error:", err);
@@ -84,11 +82,9 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       setTrialLoading(true);
       try {
           await AuthService.activateTrial(user.id);
-          // Refresh session to get new role
           const updatedUser = await AuthService.syncSession();
           if (updatedUser) {
               onLoginSuccess(updatedUser);
-              // Auto close on trial start
               onClose();
           }
       } catch (e) {
@@ -96,6 +92,34 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
       } finally {
           setTrialLoading(false);
       }
+  };
+
+  // --- STRIPE SMART LINK HANDLER ---
+  const handleBuyClick = () => {
+      if (!user) return;
+      
+      setRedirecting(true);
+
+      // 1. Base URL do seu Payment Link
+      const baseUrl = "https://buy.stripe.com/eVqfZg0HP5BddFN5O3fw401";
+      
+      // 2. Construção dos Parâmetros
+      const params = new URLSearchParams();
+      
+      // Email do utilizador (para ele não ter de escrever novamente)
+      params.append("prefilled_email", user.email);
+      
+      // ID do Utilizador (para sabermos quem pagou no futuro)
+      params.append("client_reference_id", user.id);
+      
+      // CÓDIGO PROMOCIONAL AUTOMÁTICO (OPÇÃO A)
+      params.append("prefilled_promo_code", "EARLYBIRD"); 
+
+      // 3. Redirecionamento
+      // Pequeno timeout para dar feedback visual ao utilizador
+      setTimeout(() => {
+          window.location.href = `${baseUrl}?${params.toString()}`;
+      }, 800);
   };
 
   const isProActive = user?.role === 'pro' || user?.role === 'admin';
@@ -228,7 +252,7 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
             )}
         </div>
 
-        {/* RIGHT SIDE: UPGRADE MODULE (STRATEGY LAUNCH) */}
+        {/* RIGHT SIDE: UPGRADE MODULE */}
         <div className="w-full md:w-1/2 bg-gradient-to-br from-slate-900 to-slate-950 relative overflow-hidden flex flex-col">
             {/* Decorative Background */}
             <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-slate-900/0 to-transparent pointer-events-none"></div>
@@ -245,18 +269,28 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                         </div>
                     </div>
                     {/* Early Bird Badge */}
-                    <div className="bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg border border-white/10 animate-pulse">
-                        POUPE 20%
+                    <div className="bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg border border-white/10 animate-pulse flex items-center gap-1">
+                        <Sparkles size={10} className="text-yellow-200"/> -20% OFF
                     </div>
                 </div>
 
                 <div className="mb-6">
                     <p className="text-slate-400 text-sm mb-4">Acesso vitalício a todas as ferramentas profissionais.</p>
                     <div className="flex items-end gap-3">
+                        {/* Preço com Desconto Aplicado na Visualização */}
                         <span className="text-6xl font-bold text-white tracking-tighter">€19,99</span>
                         <div className="flex flex-col mb-1.5">
                             <span className="text-slate-500 text-lg font-bold line-through decoration-red-500/50 decoration-2">€24,99</span>
-                            <span className="text-amber-500 text-xl font-black uppercase tracking-widest drop-shadow-sm">Vitalício</span>
+                            <span className="text-amber-500 text-xs font-black uppercase tracking-widest drop-shadow-sm">Vitalício</span>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-2 flex flex-col gap-1.5">
+                        <div className="text-[10px] text-emerald-400 font-mono bg-emerald-950/30 w-fit px-2 py-0.5 rounded border border-emerald-900/50 flex items-center gap-1.5">
+                            <Check size={10} strokeWidth={3} /> Cupão 'EARLYBIRD' aplicado automaticamente
+                        </div>
+                        <div className="text-[10px] text-amber-500 font-bold flex items-center gap-1.5 animate-pulse">
+                            <AlertCircle size={10} /> Válido para os primeiros 100 subscritores
                         </div>
                     </div>
                 </div>
@@ -281,18 +315,25 @@ export const ProAccessModal: React.FC<ProAccessModalProps> = ({
                 </ul>
 
                 <div className="space-y-4">
-                    {/* STRIPE BUTTON INTEGRATION */}
+                    {/* BOTÃO DE PAGAMENTO PERSONALIZADO */}
                     {!isProActive ? (
                         <div className="w-full">
                             {user ? (
-                                // @ts-ignore
-                                <stripe-buy-button
-                                  buy-button-id="buy_btn_1Sb7BQBlnpClJ5RnVXqoGuEA"
-                                  publishable-key="pk_live_51SaySiBlnpClJ5RnScxFmO8sktLkCAKYVfXHPCtpqktwNUxsCdMhNS6ihZzwNCuyLw00TEaZGOYLqRUVNnkSLXeX00eYoJ2h7Q"
-                                  client-reference-id={user.id}
-                                  customer-email={user.email}
+                                <button 
+                                  onClick={handleBuyClick}
+                                  disabled={redirecting}
+                                  className="w-full py-4 rounded-xl bg-white hover:bg-slate-200 text-slate-900 font-bold transition-all flex items-center justify-center gap-2 text-base shadow-lg hover:scale-[1.02] active:scale-[0.98] group relative overflow-hidden"
                                 >
-                                </stripe-buy-button>
+                                    {redirecting ? (
+                                        <><Loader2 size={22} className="animate-spin text-slate-900" /> A redirecionar para Stripe...</>
+                                    ) : (
+                                        <>
+                                            <CreditCard size={22} className="text-slate-900 group-hover:text-blue-600 transition-colors"/> 
+                                            <span>Aderir Agora (20% OFF)</span>
+                                            <ExternalLink size={14} className="opacity-50 absolute right-4 top-1/2 -translate-y-1/2"/>
+                                        </>
+                                    )}
+                                </button>
                             ) : (
                                 <div className="text-center p-3 border border-dashed border-slate-700 rounded-xl bg-slate-900/50 text-slate-400 text-sm mb-2">
                                     <Lock size={16} className="inline mr-2 mb-0.5"/>
