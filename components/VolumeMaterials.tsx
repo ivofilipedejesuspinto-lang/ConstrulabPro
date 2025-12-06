@@ -19,9 +19,12 @@ interface VolumeMaterialsProps {
 export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, importedAreaM2, isPro, user, onRequestUpgrade, projectName }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'box' | 'slab'>('slab');
-  const [length, setLength] = useState<string>('10');
-  const [width, setWidth] = useState<string>('5');
-  const [height, setHeight] = useState<string>('0.15');
+  
+  // Initialize with '0' as requested
+  const [length, setLength] = useState<string>('0');
+  const [width, setWidth] = useState<string>('0');
+  const [height, setHeight] = useState<string>('0');
+  
   const [showSteelDetails, setShowSteelDetails] = useState(true);
   
   const [config, setConfig] = useState<MaterialConfig>(DEFAULT_MATERIALS);
@@ -30,17 +33,16 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
 
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   
-  useEffect(() => {
-    // If area imported, logic handled in render/calculation
-  }, [importedAreaM2, mode]);
-
+  // Calculate Volume
   const calculate = () => {
     let vol = 0;
     const l = parseFloat(length) || 0;
     const w = parseFloat(width) || 0;
     const h = parseFloat(height) || 0;
 
-    if (mode === 'slab' && importedAreaM2 > 0) {
+    if (mode === 'slab') {
+       // In slab mode, we use imported area * height
+       // importedAreaM2 comes from CanvasArea component
        vol = importedAreaM2 * h;
     } else {
        vol = l * w * h;
@@ -49,6 +51,10 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
   };
 
   useEffect(calculate, [length, width, height, importedAreaM2, mode]);
+
+  // Calculate Display Area (for the new UI section)
+  // In Box mode: Area = Length * Width. In Slab mode: Area = Imported Area.
+  const currentAreaM2 = mode === 'slab' ? importedAreaM2 : (parseFloat(length) || 0) * (parseFloat(width) || 0);
 
   const displayVolume = convertValue(volumeM3, 'volume', unitSystem);
   const units = LABELS[unitSystem];
@@ -87,9 +93,6 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
     setShowPrintPreview(true);
   };
 
-  // Calculate current area for print
-  const currentArea = mode === 'slab' ? importedAreaM2 : (parseFloat(length) || 0) * (parseFloat(width) || 0);
-
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -115,43 +118,73 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
         </div>
 
         <div className="p-8 space-y-8 flex-1 flex flex-col">
-          {mode === 'slab' && importedAreaM2 > 0 ? (
-            <div className="p-8 bg-gradient-to-br from-indigo-900/20 to-blue-900/10 border border-indigo-500/30 rounded-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-6 opacity-10"><Scan size={96} className="text-indigo-400"/></div>
-              <div className="text-sm font-bold text-indigo-300 mb-2 uppercase tracking-wider">{t('canvasArea')}</div>
-              <div className="text-5xl font-mono text-white tracking-tight font-bold">
-                {formatNumber(convertValue(importedAreaM2, 'area', unitSystem))} <span className="text-2xl text-indigo-400 opacity-70">{units.area}</span>
-              </div>
-            </div>
+          
+          {/* Inputs */}
+          {mode === 'slab' ? (
+             // SLAB MODE: Only height input, area comes from canvas
+             <div className="space-y-4">
+                 <div className="p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-xl flex items-center gap-3 animate-in fade-in">
+                    <Scan className="text-indigo-400 shrink-0" size={20}/>
+                    <div className="text-sm text-indigo-200">
+                       A utilizar área desenhada no canvas acima. Ajuste a espessura abaixo.
+                    </div>
+                 </div>
+                 
+                 <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
+                      {t('thickness')} ({units.length})
+                    </label>
+                    <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
+                  </div>
+             </div>
           ) : (
-             <div className="grid grid-cols-2 gap-6">
-              <div className="group">
-                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('length')} ({units.length})</label>
-                <div className="relative">
-                  <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700"/>
+             // BOX MODE: Length, Width, Height inputs
+             <>
+                <div className="grid grid-cols-2 gap-6 animate-in fade-in">
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('length')} ({units.length})</label>
+                    <div className="relative">
+                      <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
+                    </div>
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('width')} ({units.length})</label>
+                    <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" placeholder="0.00"/>
+                  </div>
                 </div>
-              </div>
-              <div className="group">
-                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">{t('width')} ({units.length})</label>
-                <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700"/>
-              </div>
-            </div>
+
+                <div className="group animate-in fade-in">
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
+                    {t('height')} ({units.length})
+                  </label>
+                  <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05" placeholder="0.00"/>
+                </div>
+             </>
           )}
 
-          <div className="group">
-            <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">
-              {mode === 'slab' ? `${t('thickness')} (${units.length})` : `${t('height')} (${units.length})`}
-            </label>
-            <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all font-mono placeholder-slate-700" step="0.05"/>
-          </div>
-          
-          <div className="mt-auto pt-8 border-t border-slate-800/60">
-             <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-               <Container size={16}/> {t('estimatedVolume')}
+          {/* Footer with Calculations */}
+          <div className="mt-auto pt-8 border-t border-slate-800/60 grid grid-cols-1 md:grid-cols-2 gap-6">
+             
+             {/* VOLUME (Existing) */}
+             <div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Container size={14}/> {t('estimatedVolume')}
+                </div>
+                <div className="text-4xl xl:text-5xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
+                  {formatNumber(displayVolume, 3)} <span className="text-xl text-emerald-600/80 font-sans font-bold">{units.volume}</span>
+                </div>
              </div>
-             <div className="text-6xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-3">
-               {formatNumber(displayVolume, 3)} <span className="text-2xl text-emerald-600/80 font-sans font-bold">{units.volume}</span>
+
+             {/* AREA (New Section) */}
+             <div className="relative pl-0 md:pl-6 md:border-l border-slate-800/60">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Scan size={14}/> Área Calculada
+                </div>
+                <div className="text-4xl xl:text-5xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
+                  {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-xl text-blue-600/80 font-sans font-bold">{units.area}</span>
+                </div>
              </div>
+
           </div>
         </div>
       </div>
@@ -314,8 +347,8 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
             bags,
             steelBreakdown,
             mode,
-            area: currentArea,
-            projectName: projectName // Pass project name
+            area: currentAreaM2, // Updated to use the correct area variable
+            projectName: projectName 
         }}
         user={user}
         onClose={() => setShowPrintPreview(false)}

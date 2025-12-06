@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle } from 'lucide-react';
+import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle, Crown } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface NavigationMenuProps {
@@ -56,7 +56,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-            <Logo className="h-7" showText={false} />
+            {/* Logo text enabled to fix "missing something" */}
+            <Logo className="h-7" showText={true} />
             <button 
                 onClick={onClose}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -86,13 +87,22 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
                     <button 
                         key={item.id}
                         onClick={() => { onNavigate(item.id!); onClose(); }}
-                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all ${
+                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all group ${
                             activePage === item.id 
                             ? 'bg-slate-800 text-blue-400 border border-slate-700' 
                             : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                         }`}
                     >
-                        {item.icon} {item.label}
+                        {item.icon} 
+                        <span>{item.label}</span>
+                        
+                        {/* PRO Badge Logic */}
+                        {item.id === 'client-area' && (
+                             <div className="ml-auto flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.1)] group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <Crown size={10} fill="currentColor" />
+                                PRO
+                             </div>
+                        )}
                     </button>
                 );
             })}
