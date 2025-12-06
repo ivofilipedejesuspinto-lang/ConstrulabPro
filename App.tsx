@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UnitSystem, User, ProjectData, Project } from './types';
 import { CanvasArea } from './components/CanvasArea';
@@ -384,19 +383,6 @@ const App: React.FC = () => {
              <AdUnit id={ADSENSE_CONFIG.SLOTS.SIDEBAR} slotType="sidebar" isPro={isPro} />
              
              <div className="sticky top-24 flex flex-col gap-6">
-                
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                  <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-lg">
-                    <Ruler size={20} /> Conversões Rápidas
-                  </h3>
-                  <ul className="text-sm text-slate-400 space-y-3 font-mono">
-                    <li className="flex justify-between border-b border-slate-800 pb-2"><span>1 m</span> <span className="text-slate-200">3.28 ft</span></li>
-                    <li className="flex justify-between border-b border-slate-800 pb-2"><span>1 m²</span> <span className="text-slate-200">10.76 ft²</span></li>
-                    <li className="flex justify-between border-b border-slate-800 pb-2"><span>1 m³</span> <span className="text-slate-200">35.31 ft³</span></li>
-                    <li className="flex justify-between"><span>1 kg</span> <span className="text-slate-200">2.20 lb</span></li>
-                  </ul>
-                </div>
-
                 <SideCalculator />
              </div>
           </aside>

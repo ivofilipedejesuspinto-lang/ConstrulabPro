@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { UnitSystem, MaterialConfig, User } from '../types';
 import { CONVERSIONS, DEFAULT_MATERIALS, LABELS } from '../constants';
 import { convertValue, formatNumber } from '../utils/math';
-import { Settings, Calculator, Droplets, Box, Layers, Container, Scan, Download, Lock, Crown, ChevronDown } from 'lucide-react';
+import { Settings, Calculator, Droplets, Box, Layers, Container, Scan, Download, Lock, Crown, ChevronDown, Ruler } from 'lucide-react';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -183,8 +183,33 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
                   {formatNumber(convertValue(currentAreaM2, 'area', unitSystem), 2)} <span className="text-lg text-blue-600/80 font-sans font-bold">{units.area}</span>
                 </div>
              </div>
-
           </div>
+
+          {/* Quick Conversions Section */}
+          <div className="pt-6 border-t border-slate-800/60">
+             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Ruler size={12} /> Conversões Rápidas
+             </h3>
+             <div className="grid grid-cols-2 gap-3">
+                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-500 font-bold">1 m</span>
+                    <span className="text-slate-300">3.28 ft</span>
+                 </div>
+                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-500 font-bold">1 m²</span>
+                    <span className="text-slate-300">10.76 ft²</span>
+                 </div>
+                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-500 font-bold">1 m³</span>
+                    <span className="text-slate-300">35.31 ft³</span>
+                 </div>
+                 <div className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex justify-between items-center text-xs font-mono">
+                    <span className="text-slate-500 font-bold">1 kg</span>
+                    <span className="text-slate-300">2.20 lb</span>
+                 </div>
+             </div>
+          </div>
+
         </div>
       </div>
 
