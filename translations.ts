@@ -98,6 +98,9 @@ export const translations = {
     featDigitizeDesc: "Desenhar diretamente sobre uma foto ou PDF da planta.",
     featExport: "Exportação Excel",
     featExportDesc: "Descarregar listagens em formato CSV/Excel compatível.",
+    
+    // Menu
+    calculator: "Calculadora",
   },
   en: {
     metric: "Metric",
@@ -180,6 +183,7 @@ export const translations = {
     featDigitizeDesc: "Draw directly over a photo or PDF of your blueprint.",
     featExport: "Excel Export",
     featExportDesc: "Download lists in CSV/Excel compatible formats.",
+    calculator: "Calculator",
   },
   fr: {
     metric: "Métrique",
@@ -262,6 +266,7 @@ export const translations = {
     featDigitizeDesc: "Dessinez directement sur une photo de votre plan.",
     featExport: "Export Excel",
     featExportDesc: "Télécharger en formats CSV/Excel.",
+    calculator: "Calculatrice",
   },
   es: {
     metric: "Métrico",
@@ -344,5 +349,6 @@ export const translations = {
     featDigitizeDesc: "Dibuje directamente sobre una foto de su plano.",
     featExport: "Exportar Excel",
     featExportDesc: "Descargar listados en formatos CSV/Excel.",
+    calculator: "Calculadora",
   }
 };

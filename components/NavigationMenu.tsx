@@ -1,7 +1,8 @@
 
 import React, { useEffect } from 'react';
-import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle, Crown, Map } from 'lucide-react';
+import { X, Home, Info, HelpCircle, Mail, Shield, FileText, Github, Linkedin, UserCircle, Crown, Map, Calculator } from 'lucide-react';
 import { Logo } from './Logo';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavigationMenuProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface NavigationMenuProps {
 }
 
 export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose, onNavigate, activePage }) => {
+  const { t } = useLanguage();
   
   // Close on Escape key
   useEffect(() => {
@@ -31,10 +33,11 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
   }, [isOpen]);
 
   const menuItems = [
-    // Área de Cliente adicionada aqui
+    // Área de Cliente
     { id: 'client-area', label: 'Área de Cliente', icon: <UserCircle size={20}/> },
     { type: 'divider' },
-    { id: 'roadmap', label: 'Roadmap & Futuro', icon: <Map size={20}/> }, // ROADMAP ADICIONADO AQUI
+    { id: 'calculator', label: t('calculator'), icon: <Calculator size={20}/> }, // ADDED CALCULATOR
+    { id: 'roadmap', label: t('roadmap'), icon: <Map size={20}/> },
     { id: 'about', label: 'Sobre Nós', icon: <Info size={20}/> },
     { id: 'faq', label: 'Manual & FAQ', icon: <HelpCircle size={20}/> },
     { id: 'contact', label: 'Contactos', icon: <Mail size={20}/> },
@@ -77,7 +80,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose,
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
-                <Home size={20} /> Início
+                <Home size={20} /> {t('menu')}
             </button>
 
             {menuItems.map((item, idx) => {

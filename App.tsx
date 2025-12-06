@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UnitSystem, User, ProjectData, Project } from './types';
 import { CanvasArea } from './components/CanvasArea';
@@ -245,6 +246,21 @@ const App: React.FC = () => {
       {activePage === 'terms' && <TermsPage onClose={() => setActivePage(null)} />}
       {activePage === 'privacy' && <PrivacyPage onClose={() => setActivePage(null)} />}
       {activePage === 'roadmap' && <RoadmapPage onClose={() => setActivePage(null)} />}
+      
+      {/* CALCULATOR MODAL */}
+      {activePage === 'calculator' && (
+        <div className="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200" onClick={() => setActivePage(null)}>
+           <div className="relative w-full max-w-sm" onClick={e => e.stopPropagation()}>
+               <button 
+                  onClick={() => setActivePage(null)}
+                  className="absolute -top-12 right-0 md:-right-12 p-2 text-slate-400 hover:text-white bg-slate-800/50 rounded-full transition-colors"
+               >
+                  <X size={24} />
+               </button>
+               <SideCalculator />
+           </div>
+        </div>
+      )}
 
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -382,9 +398,7 @@ const App: React.FC = () => {
           <aside className="hidden lg:flex flex-col gap-6 print:hidden h-full">
              <AdUnit id={ADSENSE_CONFIG.SLOTS.SIDEBAR} slotType="sidebar" isPro={isPro} />
              
-             <div className="sticky top-24 flex flex-col gap-6">
-                <SideCalculator />
-             </div>
+             {/* SIDEBAR CALCULATOR REMOVED FROM HERE */}
           </aside>
 
         </div>
