@@ -164,9 +164,9 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
           {/* Footer with Calculations */}
           <div className="mt-auto pt-8 border-t border-slate-800/60 grid grid-cols-1 md:grid-cols-2 gap-6">
              
-             {/* VOLUME (Existing) */}
+             {/* VOLUME */}
              <div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2 whitespace-nowrap">
                   <Container size={14}/> {t('estimatedVolume')}
                 </div>
                 <div className="text-3xl lg:text-4xl font-bold text-emerald-400 font-mono tracking-tight flex items-baseline gap-2">
@@ -174,9 +174,9 @@ export const VolumeMaterials: React.FC<VolumeMaterialsProps> = ({ unitSystem, im
                 </div>
              </div>
 
-             {/* AREA (New Section) */}
+             {/* AREA */}
              <div className="relative pl-0 md:pl-6 md:border-l border-slate-800/60">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2 whitespace-nowrap">
                   <Scan size={14}/> Área Calculada
                 </div>
                 <div className="text-3xl lg:text-4xl font-bold text-blue-400 font-mono tracking-tight flex items-baseline gap-2">
